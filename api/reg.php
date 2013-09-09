@@ -142,6 +142,8 @@ $headers[] = "From: regbot@indbtc.com";
         "email" => $this->SafeEmail($_POST['email']),
         //"url" => $url
           ),
+      "scripts" => "reg",
+      "routeline" => "ClearAfterReg",
       "result" => "content"
       );
   }

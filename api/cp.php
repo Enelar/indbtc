@@ -18,6 +18,10 @@ class cp extends api
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
+    
+    $annual = LoadModule('api', 'annual');
+    //if (!$annual->Payed($login->UID()))
+      //return array("error" => "Необходима ежегодная подписка что бы продолжить");
 
     $matrix = LoadModule('api', 'matrix');
     $nid = $matrix->AddToFriend($login->UID(), $level);

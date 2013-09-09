@@ -4,6 +4,7 @@ class finances extends api
 {
   public static $tax = 0.0005;
   private static $line_price = 0.001; // deprecated
+  private static $count_bills = 7;
   /*
   private static $levels = array
   (
@@ -57,12 +58,13 @@ class finances extends api
     $quest = $res['id'];
     
     $matrix_price = self::$levels[$level];
-    $line_price = $matrix_price * 0.09;
+    $total_price = $matrix_price * 2;
+    $line_price = $total_price * 0.09;
 
     $this->Line($quest, $parents, $line_price);
 
     $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
-    $this->AddBill($quest, null, $matrix_price * 0.05);
+    $this->AddBill($quest, null, $total_price * 0.05);
     if ($this->CheckQuest($quest))
     {
       db::Query("COMMIT;");
@@ -150,7 +152,7 @@ class finances extends api
   private function CheckQuest( $quest )
   {
     $row = db::Query("SELECT count(*) FROM finances.sys_bills WHERE quest=$1", array($quest), true);
-    return $row['count'] == 6;
+    return $row['count'] == self::$count_bills;
   }
 
   protected function OpenNextBill( $quest )
@@ -227,12 +229,12 @@ class finances extends api
   protected function FinishQuest( $quest )
   {
     $targets = $this->QuestTargets($quest);    
-    if (count($targets) != 6)
+    if (count($targets) != self::$count_bills)
     {
       $targets = $this->OpenAllBills($quest);
       $targets = $this->QuestTargets($quest);
     }
-    if (count($targets) != 6)
+    if (count($targets) != self::$count_bills)
       return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");    
 
     $wallet = LoadModule('api', 'wallet');

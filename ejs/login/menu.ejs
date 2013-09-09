@@ -1,0 +1,10 @@
+<%
+if (!logined)
+{ %>
+<a href="javascript:SoftLink('api/login')"><img src='img/login.png' class='login_button' /></a>
+<a href="javascript:SoftLink('api/reg')"><img src='img/reg.png' class='reg_button' /></a>
+<% }
+else
+{ %>
+<a href="javascript:SoftLink('api/login/DoLogout')"><img src='img/logout.png' class='logout_button' /></a>
+<% } %>

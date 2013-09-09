@@ -1,0 +1,36 @@
+<% MakeCpMenu(); %>
+<table width="100%">
+<%
+function GenFile( name, url, img )
+{
+  return {"name": name, "url": url, "img" : img};
+}
+function DownloadButton( url )
+{
+  return '<a href="' + url + '"><img src="img/buttons/download.png" height="28px" width="140px"/></a>';
+}
+files = [];
+files.push(GenFile("Маркетинг план", 'http://indbtc.com/INDEPENDENCE BITCOIN.pdf', 'http://indbtc.com/metodic.png'));
+//files.push(GenFile("Методичка", "url", "//i1.ytimg.com/vi/ujm66Wear-w/sddefault.jpg"));
+//files.push(GenFile("Методичка", "url", "//i1.ytimg.com/vi/ujm66Wear-w/sddefault.jpg"));
+//files.push(GenFile("Методичка", "url", "//i1.ytimg.com/vi/ujm66Wear-w/sddefault.jpg"));
+//files.push(GenFile("Методичка", "url", "//i1.ytimg.com/vi/ujm66Wear-w/sddefault.jpg"));
+
+for (var i in files)
+{
+  if (i === 'length' || !files.hasOwnProperty(i)) continue;
+  var name = files[i]['name'];
+  var url = files[i]['url'];
+  var img = files[i]['img'];
+%>
+<tr>
+<td style="text-align: left;"><%= DownloadButton(url) %></td>
+<td width="140">
+<div style="text-align: center; font: bold;"><%= name %></div>
+<div style="text-align: right;"><img width="140" height="100" src='<%= img %>' /></div>
+</td>	
+</tr>
+<%
+}
+%>
+</table>

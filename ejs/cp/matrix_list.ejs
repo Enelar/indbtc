@@ -1,0 +1,44 @@
+<table style='margin-left: -5px; width: 605px;'>
+
+<%
+MakeCpMenu();
+for (i = 0; i < 8; i++)
+{
+  var pre = "<td>";
+  var post = "</td>";
+  if (i % 2)
+    post = post + "</tr>";
+  else
+    pre = "<tr>" + pre;
+%>
+<%= pre %>
+<div class='matrix_container'>
+  <div id='matrix_header_<%= i %>' class="matrix_create_line">Загрузка...</div>
+  <div id='matrix_<%= i %>' class='matrix'></div>
+</div>
+  <%
+  if (levels[i])
+  {
+    id = levels[i];
+    matrix = matrix_list[id]
+    if (matrix['commited'] == 'f')
+    {
+      url = 'api/matrix/ShowMatrixCreate?a='+id;
+      phoxy.SimpleApiRequest(url);
+      //SoftLink(url);
+    }
+    else
+      ShowMatrix(i, 'Активный цикл', 'matrix/matrix', {matrix: matrix, level: i});
+  }
+  else
+  {
+    ShowMatrix(i, '', 'matrix/pre_create', {'level': i});
+  }
+  %>
+<%= post %>
+<%
+}
+%>
+
+
+</table>

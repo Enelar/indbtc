@@ -1,0 +1,30 @@
+<%= form_tag('#', {"id": "reg_form"}) %>
+<table width='100%' >
+<%
+for (var name in form)
+{
+  if (name === 'length' || !form.hasOwnProperty(name)) continue;
+  var type = form[name];
+  var value = '';
+  if (values.hasOwnProperty(name))
+    value = values[name];
+   %>
+<tr><td style='font-size: 20; text-align: right; width: 100px; color: #333;'>
+<% if (type != 'hidden')
+   {
+   %>
+<%= name %>
+<% } %>
+</td><td style='text-align: left'>
+<%= input_field_tag(name, value, type, {"requered":"true", "size": 25}) %>
+</td></tr>
+
+<%
+}
+%>
+<tr><td></td><td style='height: 30px'>
+<a href="#" onclick="javascript:$(this).parent().submit(); return false;"><img src='img/reg.png' class='reg_button' /></a>
+</td></tr>
+</table>
+</form>
+Внимание : просьба указывать настоящий номер телефона , оформленный именно на вас , так как данная информация потребуется в случае утери пароля.

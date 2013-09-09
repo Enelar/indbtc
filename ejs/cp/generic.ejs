@@ -1,0 +1,36 @@
+<% MakeCpMenu(); %>
+<div style="padding-top: 30px; padding-left: 20px">
+<%
+
+currency_name = "฿ (btc)";
+%>
+Персональная ссылка представляет собой ссылку с помощью которой осуществляется регистрация ваших партнеров в проект:
+<br><br>
+<a href="<%= invite_url %>"><%= invite_url %></a>
+<br><br>
+Если по какой то причине вы не можете дать ссылку,<br> скажите свой ID: <b><%= uid %></b> или <b><%= hash_id %></b>, его можно ввести при регистрации.
+<table>
+<tr>
+<%
+
+%>
+
+<td colspan='2' style='text-align: center; height: 60px;'>Результат работы в проекте</td></tr><tr height='40'><td>
+Размер инвестиций в проект:</td><td width='150'><div value="<%= payed %>" class="currency_convert"></div></td></tr><tr height='40'><td>
+Размер средств полученных в результате инвестирования в проект:</td><td><div value="<%= recieved %>" class="currency_convert"></div></td></tr><tr height='40'><td>
+Количество дней участия в проекте:</td><td><%= days.toFixed(0) %></td></tr><tr height='40'><td>
+Средний заработок в день:</td><td><div value="<%= recieved / days %>" class="currency_convert"></div></td></tr><tr height='40'><td>
+<%
+if (days < 30)
+{
+%>
+Ожидаемый
+<%
+} else {
+%>
+Средний
+<%
+} 
+%> заработок в месяц:</td><td><div value="<%= recieved / (days / 30) %>" class="currency_convert"></div></td></tr>
+</table>
+</div>

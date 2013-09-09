@@ -1,0 +1,25 @@
+<table>
+<tr>
+<td>
+  <div style="margin-left:10px; margin-top:10px;">
+  <%= img_tag(wallet_qr_url, 'test', {'width' : 111, 'height' : 111}) %><br>
+  </div>
+</td><td style='text-align: center'>
+<%= link_to('Оплатить с компьютера', "bitcoin:" + wallet + "?amount=" + amount) %><br>
+<%
+//javascript:$('#amount').val(< %=amount% >);$('#btca').val("< %=wallet% >");
+%>
+</td></tr>
+</table>
+<%
+HeadMatrix(level, link_to("Проверить оплату", "javascript:phoxy.SimpleApiRequest('api/cp/CommitNode?node=" + node + "')"));
+if (0)
+{
+%>
+Matrix created, id <%= node %><br>
+You should finish quest <%= quest %> in 48 hours!!!<br>
+Pay <%= amount %> to <%= wallet %><br>
+<hr>
+<%
+}
+%>

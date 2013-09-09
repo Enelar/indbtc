@@ -1,0 +1,22 @@
+<table width='100%' style='text-align: center; margin-top: 30px;font-size: 18;color: #444;'>
+<tr><td>Уровень</td><td>Партнеры</td><td>Получено</td></tr>
+<%
+function EchoLine()
+{
+  return '<tr height="15px"><td colspan="3"><img src="img/levels_line.png" /></td></tr>';
+}
+%>
+<%= EchoLine() %>
+<%
+MakeCpMenu();
+for (i = 0; i < levels.length; i++)
+{
+  
+%>
+<td><%= i + 1 %></td><td><%= levels[i] %> people</td><td width="33%" value="<%= recieved[i] %>" class="currency_convert"></td>
+</tr>
+<%= EchoLine() %>
+<%
+}
+%>
+</table>

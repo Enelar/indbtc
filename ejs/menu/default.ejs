@@ -1,0 +1,9 @@
+<%
+for (var name in menu)
+{
+  if (name === 'length' || !menu.hasOwnProperty(name)) continue;
+  var url = menu[name];
+  url = "javascript:SoftLink('" + url + "')";
+ %>
+<a href="<%= url %>" class="<%= name %>"></a>
+<% } %>

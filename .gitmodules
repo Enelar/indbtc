@@ -1,0 +1,3 @@
+[submodule "phoxy"]
+	path = phoxy
+	url = http://github.com/Enelar/phoxy

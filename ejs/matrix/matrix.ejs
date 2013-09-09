@@ -1,0 +1,50 @@
+<div class="group_shapes">
+   <div class="margin_first_shape"></div>
+   <div class="matrix_0 circle_matrix"><img src='img/group_shape_big.png' class="matrix_0" /></div>
+   <div class="matrix_1 circle_matrix"></div>
+   <div class="matrix_2 circle_matrix"></div>
+   <div class="matrix_3 circle_matrix"></div>
+   <div class="matrix_4 circle_matrix"></div>
+   <div class="matrix_5 circle_matrix"></div>
+   <div class="matrix_6 circle_matrix"></div>
+</div>
+
+
+<%
+  if (matrix.childs.length > 0)
+  {
+    var cid=0;
+    for (var id in matrix.childs)
+    {
+      if (id === 'length' || !matrix.childs.hasOwnProperty(id)) continue;
+      var child = matrix.childs[id];
+      cid++;
+      HideChild(level, ChildId(0, cid), false);
+      if (child.commited == 't')
+        ActiveChild(level, ChildId(0, cid));
+      
+      if (child.childs.length > 0)
+      {
+        var gcid = 0;
+      %>
+        <%
+        for (var gid in child.childs)
+        {
+          if (gid === 'length' || !child.childs.hasOwnProperty(gid)) continue;
+          var grand_child = child.childs[gid];
+          gcid++;
+          HideChild(level, ChildId(cid, gcid), false);
+          if (grand_child.commited == 't')
+            ActiveChild(level, ChildId(cid, gcid));
+        }
+      } // end of child childs if
+ } %>
+
+  <%
+  } // end if childs not empty
+  %>
+
+<%
+//}
+%>
+

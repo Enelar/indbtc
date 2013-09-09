@@ -1,0 +1,9 @@
+<div class="group_shapes"></div>
+<%
+i = level;
+price = 1 << i;
+if (i == 7)
+  price = 0.1;
+url = "<a href=\"javascript:SoftLink('api/cp/CreateMatrix?a=" + i + "')\">Создать цикл, уровень " + (i+1) + " - " + price + "฿</a>";
+HeadMatrix(i, url);
+%>

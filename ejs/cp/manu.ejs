@@ -1,0 +1,19 @@
+<table>
+<tr>
+<% for (var key in menu)
+{
+  if (key === 'length' || !menu.hasOwnProperty(key)) continue;
+  var val = form[key];
+%>
+<td>
+<%= val %>
+</td>  
+<%
+}
+%>
+</tr>
+</table>
+This is cp page
+<%= link_to("Create matrix", "javascript:SoftLink('api/cp/CreateMatrix')") %>
+<%= link_to("Show matrix", "javascript:SoftLink('api/cp/MyMatrix')") %>
+

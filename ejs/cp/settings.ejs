@@ -1,0 +1,20 @@
+<% MakeCpMenu(); %>
+<form id="settings_form" style='margin-top: 20px' action="api/cp/Settings?commit=1" method="post">
+<table class='settings_table'>
+<tr><td>
+Новый пароль:</td><td>
+<input type='text' name='new' placeholder='New password'/></td></tr>
+<tr><td>
+Повторите:</td><td>
+<input type='text' name='re' placeholder='New password again'/></td></tr>
+<tr><td>
+Текущий пароль:</td><td>
+<input type='password' name='cur' placeholder='Current password'/></td></tr>
+<!--
+<tr><td colspan='2' style='text-align: center'>
+
+</td></tr>
+-->
+</table>
+<a onclick='SettingsSave()' class='settings_save' style='margin: auto; margin-top: 40px' ></a>
+</form>

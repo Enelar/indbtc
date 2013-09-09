@@ -1,0 +1,19 @@
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<%
+var urls = { "generic": "api/cp/GenericInfo", "cycles": "api/cp/MyMatrix", "levels": "api/cp/Levels", "settings": "api/cp/Settings", "files": "api/cp/Files" };
+var width=100/5;
+var menu = urls;
+for (var name in menu)
+{
+  if (name === 'length' || !menu.hasOwnProperty(name)) continue;
+  var url = "javascript:SoftLink('" + menu[name] + "')";
+%>
+<td width="120px" height="25px">
+<a href="<%= url %>" class="<%= name %>" style='display: block; width: 100%; height: 100%;'></a>
+</td>
+<%
+}
+%>
+</tr>
+</table>

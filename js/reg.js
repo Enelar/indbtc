@@ -77,3 +77,8 @@ function PrefferLogin()
   $('#reg_form').parent().html('');
   phoxy.SimpleApiRequest("api/login");
 }
+
+function ClearAfterReg()
+{
+  $('#reg_form').parent().html('');
+}

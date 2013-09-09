@@ -6,4 +6,9 @@ class robot extends api
   {
     db::Query("DELETE FROM matrix.nodes WHERE commited=false AND now()-snap > '24 hour'::interval");
   }
+  protected function Test()
+  {
+    $login = IncludeModule('api', 'login');      
+    var_dump($login->UID());
+  }
 }

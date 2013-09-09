@@ -18,6 +18,7 @@ class reg extends api
     
     if (!isset($_SESSION['friend']))
       $form['referer'] = 'text';
+
     
     $val = array(
       "capcha_id" => $capcha['id'],
@@ -95,9 +96,12 @@ $headers[] = "From: regbot@indbtc.com";
     if (!$this->Capcha($id, $value))
       return array("error" => "Capcha not match");
       */
+    
     if (strlen($_POST['phone']) < 5)
       return array("error" => "Крайне важно указать настоящий телефон. Серьезно.");
-    $login = IncludeModule('api', 'login');      
+    $login = LoadModule('api', 'login');      
+    if (!isset($_POST['age']) && $_POST['age'] != 'checked')
+      return array("error" => "Вы должны быть старше 18 лет");
     $code = md5(rand());
 
     $row = db::Query("INSERT INTO users.request(email, pass, ip, code, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id;",

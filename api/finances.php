@@ -57,11 +57,12 @@ class finances extends api
     $quest = $res['id'];
     
     $matrix_price = self::$levels[$level];
-    $line_price = $matrix_price / 5;
+    $line_price = $matrix_price * 0.09;
 
     $this->Line($quest, $parents, $line_price);
 
     $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
+    $this->AddBill($quest, null, $matrix_price * 0.05);
     if ($this->CheckQuest($quest))
     {
       db::Query("COMMIT;");

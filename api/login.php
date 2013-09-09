@@ -75,7 +75,9 @@ class login extends api
   protected function DoLogin( $id )
   {
     global $_SESSION;
-    $_SESSION['uid'] = $id;
+    $parsed = intval($id);
+    assert($parsed == $id);
+    $_SESSION['uid'] = $parsed;
   }
 
   protected function IsLogined( )

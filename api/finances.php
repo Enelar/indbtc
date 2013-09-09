@@ -4,7 +4,7 @@ class finances extends api
 {
   public static $tax = 0.0005;
   private static $line_price = 0.001; // deprecated
-  private static $count_bills = 7;
+  private static $count_bills = 6;
   /*
   private static $levels = array
   (
@@ -59,12 +59,12 @@ class finances extends api
     
     $matrix_price = self::$levels[$level];
     $total_price = $matrix_price * 2;
-    $line_price = $total_price * 0.09;
+    $line_price = $total_price * 0.1;
 
     $this->Line($quest, $parents, $line_price);
 
     $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
-    $this->AddBill($quest, null, $total_price * 0.05);
+//    $this->AddBill($quest, null, $total_price * 0.05);
     if ($this->CheckQuest($quest))
     {
       db::Query("COMMIT;");

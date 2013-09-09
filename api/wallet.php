@@ -22,15 +22,26 @@ class wallet extends api
 
   public function GetInputQuestWallet( $quest )
   {
+    $wallet = $this->GetQuestInputWallet($quest);
+    if ($wallet != null)
+      return $wallet;
     try
     {
       $this->rpc->getaccountaddress("quest_{$quest}");
-      return $this->QuestWallets($quest)[0];
+      $wallet = $this->QuestWallets($quest)[0];
+      db::Query("UPDATE finances.quests SET input_wallet=$2 WHERE id=$1", array($quest, $wallet));
+      return $wallet;
     } catch (Exception $e)
     {
       return false;
     }
     
+  }
+  
+  private function GetQuestInputWallet( $quest )
+  {
+    $row = db::Query("SELECT input_wallet FROM finances.quests WHERE id=$1", array($quest), true);    
+    return $row['input_wallet'];
   }
 
   public function QuestBalance( $quest )

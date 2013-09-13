@@ -41,8 +41,8 @@ function http_post_request($uri, $post_array, $time_out = 10, $headers = 0)
     // Time-out in seconds
     curl_setopt($ch, CURLOPT_TIMEOUT, $time_out);
     
-    curl_setopt($curl, CURLOPT_POST, true);
-    curl_setopt($curl, CURLOPT_POSTFIELDS, $post_array);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_array);
 
     // Executing
     $result = curl_exec($ch);

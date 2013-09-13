@@ -249,6 +249,9 @@ class finances extends api
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
+
+    $sms = LoadModule('api', 'sms');
+    $sms->TellAboutFinishedQuest($quest);
     return array(
       "data" => array("transaction" => $transaction)
     );

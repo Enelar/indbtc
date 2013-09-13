@@ -120,4 +120,39 @@ class login extends api
       return array("error" => "Some error, please retry");
     return array("error" => "Пароль успешно изменен");
   }
+
+  protected function ResetPassword( $email )
+  {
+    if (!$this->UID() == 2)
+      return array("error" => 'You not admin');
+    do
+    {
+      $origin = base64_encode(md5(time() + microtime(), true));
+    } while (strrchr($origin, '/'));
+    $pass = substr($origin, 0, -1);
+    $hash = $this->PasswordHash($pass);
+    $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING email", array($email, $hash), true);
+
+    if (!isset($ret['email']))
+      return array("error" => "User not found");
+$headers   = array();
+$headers[] = "MIME-Version: 1.0";
+$headers[] = "Content-type: text/plain; charset=utf-8"; 
+$headers[] = "From: regbot@indbtc.com";
+    mail($ret['email'], "Independence limited password reset", "
+Здравствуйте,
+
+По вашей просьбе был совершен сброс пароля. Ваш новый пароль
+
+{$pass}
+
+Пожалуйста удалите это письмо сразу после прочтения, а пароль сохраните.
+
+С уважением,
+
+команда Independece
+----------------------------- 
+".(phoxy_conf()['site']), implode("\r\n", $headers));
+    return array("Password changed $pass");
+  }
 }

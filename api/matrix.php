@@ -213,7 +213,7 @@ class matrix extends api
         continue;
       $child = $ret[$key];
       $pid = $child['parent'];
-      assert(isset($ret[$pid]));  
+      assert(isset($ret[$pid]), $pid);  
       $ret[$pid]['childs']['length'] = 0;
       $ret[$pid]['childs'][$key] = $child;
       $ret[$key] = &$ret[$pid]['childs'][$key];      

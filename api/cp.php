@@ -30,7 +30,7 @@ class cp extends api
 	$finances = LoadModule('api', 'finances');
 	$qid = $finances->MakeQuest(null, $level);
 //    var_dump($nid);
-    if ($nid == false)
+    if ($qid == false)
       return array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами.");
 
     $matrix = LoadModule('api', 'matrix', true);

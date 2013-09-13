@@ -251,16 +251,11 @@ class matrix extends api
 
   protected function ShowMatrixCreate( $qid )
   {
-    //$node = db::Query("SELECT * FROM matrix.nodes WHERE id=$1", array($nid), true);
-    $quest = $this->NodeQuest($qid);
-    //var_dump($quest);
+    $quest = $qid;
     $wallet = LoadModule('api', 'wallet');
-    //debug_print_backtrace();
     $input_wallet = $wallet->GetInputQuestWallet($quest);
     if ($input_wallet == false)
-    {
       return array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us.");
-    }
     //$bitcoin = LoadModule('api', 'bitcoin');
     //$protected = $bitcoin->ProtectWithCallback($input_wallet);
     $finances = LoadModule('api', 'finances');
@@ -279,10 +274,10 @@ class matrix extends api
           "wallet_qr_url" => phoxy_conf()['site']."api/qr/Bill?wallet={$input_wallet}&amount={$amount}",
           "bitcoin_uri" => "bitcoin:{$input_wallet}?amount={$amount}",
           "amount" => $amount,
-          "level" => $node['level']
+          "level" => $quest_info['level']
         ),
       "design" => "matrix/create",
-      "result" => "matrix_{$node['level']}"
+      "result" => "matrix_{$quest_info['level']}"
     );
   }
 }

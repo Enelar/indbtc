@@ -47,9 +47,34 @@ class cp extends api
       "data" => array("invite" => $url)
     );
   }
+  
+  protected function CommitQuest( $qid )
+  {
+    $finances = LoadModule('api', 'finances');
+	$quest_info = $finances->GetQuestInfo($qid);
+    $login = LoadModule('api', 'login');
+	if ($quest_info['uid'] != $login->UID())
+	  return array("error" => "Its not your quest");
+    $wallet = LoadModule('api', 'wallet');
+	if ($finances->LevelTotalPrice() > $wallet->QuestBalance($qid))
+	  return array("error" => "Недостаточно средств. (Функционал разьясняющий почему недостаточно восстанавливается)");
+	
+	if (!$finances->CheckQuest($qid))
+	{
+	  db::Query("BEGIN;");
+	  $matrix = LoadModule('api', 'matrix');
+	  $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
+	  db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNS id", array($qid, $nid), true);
+	  db::Query("COMMIT;");
+	  if ($finances->GetQuestInfo($qid)['nid'] != $nid)
+	    return array("error" => "Ошибка вступления в матричную систему");
+	  $finances->MakeBills($qid);
+	}
+  }
 
   protected function CommitNode( $node, $force = false )
   {
+    return array("error" => "deprecated");
     $matrix = LoadModule('api', 'matrix');
     $quest = $matrix->NodeQuest($node);
     $quest_info = LoadModule('api', 'finances')->GetQuestInfo($quest);

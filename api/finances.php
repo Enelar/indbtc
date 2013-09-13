@@ -51,6 +51,11 @@ class finances extends api
     return true;
   }
   
+  public function LevelTotalPrice( $level )
+  {
+    return self::$levels[$level] * 2;
+  }
+  
   public function MakeBills( $qid )
   {
     db::Query("BEGIN;");

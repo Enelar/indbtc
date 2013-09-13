@@ -86,7 +86,7 @@ class finances extends api
   
   public function GetQuestInfo( $qid )
   {
-	return db::Query("SELECT * FROM finances.quest_status WHERE id=$1", array($qid), 1);
+	return db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), 1);
   }
 
   private function GetParents( $node = null, $count = 5 )

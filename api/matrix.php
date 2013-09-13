@@ -260,15 +260,17 @@ class matrix extends api
     //$protected = $bitcoin->ProtectWithCallback($input_wallet);
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
-
+	
     $tax = finances::$tax;
-    $amount = $quest_info['amount'] - $quest_info['payed'] + $tax;
+    $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
+	if ($amount <= $tax)
+	  return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
     return array
     (
       "data" =>
         array
         (
-          "node" => $nid,
+          "node" => null,
           "quest" => $quest,
           "wallet" => $input_wallet,
           "wallet_qr_url" => phoxy_conf()['site']."api/qr/Bill?wallet={$input_wallet}&amount={$amount}",

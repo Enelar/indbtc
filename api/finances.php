@@ -45,17 +45,18 @@ class finances extends api
   public function MakeQuest( $node, $level = 0 )
   {
     $matrix = IncludeModule('api', 'matrix');
-    $uid = $matrix->NodeOwner($node);
-    $n = $matrix->GetNode($node);
-    $level = $n['level'];
+	$uid = LoadModule('api', 'login')->UID();
     if ($uid == false)
       return false;
+    return true;
+  }
+  
+  public function MakeBills( $qid )
+  {
     db::Query("BEGIN;");
 
-    $res = db::Query("INSERT INTO finances.quests(uid, nid, ip) VALUES ($1, $2, $3) RETURNING id",
-    array($uid, $node, _ip_), true);
-    $parents = $this->GetParents($node);
-    $quest = $res['id'];
+	$quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid)
+    $parents = $this->GetParents();
     
     $matrix_price = self::$levels[$level];
     $total_price = $matrix_price * 2;
@@ -64,7 +65,7 @@ class finances extends api
     $this->Line($quest, $parents, $line_price);
 
     $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
-//    $this->AddBill($quest, null, $total_price * 0.05);
+
     if ($this->CheckQuest($quest))
     {
       db::Query("COMMIT;");
@@ -72,7 +73,7 @@ class finances extends api
     }
 
     db::Query("ROLLBACK;");
-    return false;
+    return false;  
   }
   
   public function GetQuestInfo( $qid )
@@ -80,10 +81,15 @@ class finances extends api
 	return db::Query("SELECT * FROM finances.quest_status WHERE id=$1", array($qid), 1);
   }
 
-  private function GetParents( $node, $count = 5 )
+  private function GetParents( $node = null, $count = 5 )
   {
-    $matrix = LoadModule('api', 'matrix');
-    $uid = $matrix->NodeOwner($node);
+    if ($node != null)
+	{
+	  $matrix = LoadModule('api', 'matrix');
+	  $uid = $matrix->NodeOwner($node);
+	}
+	else
+	  $uid = LoadModule('api', 'login')->UID();
     $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
     $ret = array();
     foreach ($parents as $parent)

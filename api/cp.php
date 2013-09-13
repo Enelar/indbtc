@@ -15,6 +15,7 @@ class cp extends api
   }
   protected function CreateMatrix( $level = 0 )
   {
+    return array("error" => "В связи с изменениями логики ядра данная функция временно недоступна");
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
@@ -23,14 +24,17 @@ class cp extends api
     //if (!$annual->Payed($login->UID()))
       //return array("error" => "Необходима ежегодная подписка что бы продолжить");
 
-    $matrix = LoadModule('api', 'matrix');
-    $nid = $matrix->AddToFriend($login->UID(), $level);
+    //$matrix = LoadModule('api', 'matrix');
+    //$nid = $matrix->AddToFriend($login->UID(), $level);
+	
+	$finances = LoadModule('api', 'finances');
+	$qid = $finances->MakeQuest(null, $level);
 //    var_dump($nid);
     if ($nid == false)
       return array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами.");
 
     $matrix = LoadModule('api', 'matrix', true);
-    $ret = $matrix->ShowMatrixCreate($nid);
+    $ret = $matrix->ShowMatrixCreate($qid);
     return $ret;
   }
 

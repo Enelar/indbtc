@@ -249,10 +249,10 @@ class matrix extends api
     return $ret;
   }
 
-  protected function ShowMatrixCreate( $nid )
+  protected function ShowMatrixCreate( $qid )
   {
-    $node = db::Query("SELECT * FROM matrix.nodes WHERE id=$1", array($nid), true);
-    $quest = $this->NodeQuest($nid);
+    //$node = db::Query("SELECT * FROM matrix.nodes WHERE id=$1", array($nid), true);
+    $quest = $this->NodeQuest($qid);
     //var_dump($quest);
     $wallet = LoadModule('api', 'wallet');
     //debug_print_backtrace();

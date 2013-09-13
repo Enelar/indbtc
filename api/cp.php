@@ -69,7 +69,9 @@ class cp extends api
 	  if ($finances->GetQuestInfo($qid)['nid'] != $nid)
 	    return array("error" => "Ошибка вступления в матричную систему");
 	  $finances->MakeBills($qid);
+	  assert($finances->CheckQuest($qid));
 	}
+	return $finances->FinishQuest($qid);
   }
 
   protected function CommitNode( $node, $force = false )

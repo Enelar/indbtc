@@ -92,7 +92,7 @@ class login extends api
   {
     if (!$this->IsLogined())
       return array('error' => 'Личный кабинет доступен только для зарегистрированных пользователей', 'reset' => "#api/login");
-    global $_SESSION;
+    global $_SESSION;	
     return $_SESSION['uid'];
   }
   

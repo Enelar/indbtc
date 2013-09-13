@@ -56,8 +56,9 @@ class cp extends api
 	if ($quest_info['uid'] != $login->UID())
 	  return array("error" => "Its not your quest");
     $wallet = LoadModule('api', 'wallet');
-	if ($finances->LevelTotalPrice() > $wallet->QuestBalance($qid))
-	  return array("error" => "Недостаточно средств. (Функционал разьясняющий почему недостаточно восстанавливается)");
+	$res = $this->MoneyEnough($qid);
+	if ($res !== true)
+	  return $res;
 	
 	if (!$finances->CheckQuest($qid))
 	{
@@ -73,14 +74,13 @@ class cp extends api
 	}
 	return $finances->FinishQuest($qid);
   }
-
-  protected function CommitNode( $node, $force = false )
+  
+  public function MoneyEnough( $qid )
   {
-    return array("error" => "deprecated");
-    $matrix = LoadModule('api', 'matrix');
-    $quest = $matrix->NodeQuest($node);
-    $quest_info = LoadModule('api', 'finances')->GetQuestInfo($quest);
-    if ($quest_info['completed'] == 6)
+    $quest = $qid;
+    $finances = LoadModule('api', 'finances');
+    $quest_info = $finances->GetQuestInfo($quest);
+    if ($quest_info['nid'] != null)
       return array(
       "data" => array("status" => "already", "message" => "Already completed"),
       "error" => "Цикл уже активирован, сейчас мы обновим страницу что бы вы это увидели",
@@ -88,8 +88,8 @@ class cp extends api
 
     $wallet = LoadModule('api', 'wallet');
     $balance = $wallet->QuestBalance($quest);
-    $target = ($quest_info['amount'] - $quest_info['payed']);
-    $need = $target - $balance;
+    //$target = ($quest_info['amount'] - $quest_info['payed']);
+    $need = $finances->LevelTotalPrice($quest_info['level']) - $balance;
     if (!$wallet->GetTxCount($quest))
       return array(
         "error" => "Мы ждем оплаты. (сейчас произойдет переход на страницу кошелька)",
@@ -109,6 +109,14 @@ class cp extends api
 Требуется: {$target}, баланс: {$balance}.
 (Если вы выслали полную сумму, то рекомендуем подождать пол часа, деньги просто не дошли до нас)",
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest));
+    return true;  
+  }
+
+  protected function CommitNode( $node, $force = false )
+  {
+    return array("error" => "deprecated");
+    $matrix = LoadModule('api', 'matrix');
+    $quest = $matrix->NodeQuest($node);
 
     $finances = LoadModule('api', 'finances');
     $ret = $finances->FinishQuest($quest);

@@ -235,7 +235,7 @@ class matrix extends api
     $login = LoadModule("api", "login");
     $res = db::Query("WITH last_matrix AS
     (
-      SELECT max(id) as id, level FROM matrix.nodes WHERE uid=$1 GROUP BY level ORDER BY id DESC
+      SELECT max(nid) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
     ) SELECT id, level, matrix.is_completed(id, 2) as status FROM last_matrix", array($login->UID()));
     $ret = array();
     foreach ($res as $t)

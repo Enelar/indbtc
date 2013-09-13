@@ -42,13 +42,16 @@ class finances extends api
     1093.5
   );
   */
-  public function MakeQuest( $node, $level = 0 )
+  public function MakeQuest( $node = null, $level = 0 )
   {
     $matrix = IncludeModule('api', 'matrix');
 	$uid = LoadModule('api', 'login')->UID();
     if ($uid == false)
       return false;
-    return true;
+	assert($node == null);
+	$row = db::Query("INSERT INTO finances.quests (uid, level, ip) VALUES ($1, $2, $3) RETURNING id",
+	  array($uid, $level, _ip_), true);
+    return $row['id'];
   }
   
   public function LevelTotalPrice( $level )
@@ -60,7 +63,7 @@ class finances extends api
   {
     db::Query("BEGIN;");
 
-	$quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid)
+	$quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
     
     $matrix_price = self::$levels[$level];

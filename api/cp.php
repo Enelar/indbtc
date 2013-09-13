@@ -15,7 +15,7 @@ class cp extends api
   }
   protected function CreateMatrix( $level = 0 )
   {
-    return array("error" => "В связи с изменениями логики ядра данная функция временно недоступна");
+    //return array("error" => "В связи с изменениями логики ядра данная функция временно недоступна");
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");

@@ -233,20 +233,36 @@ class matrix extends api
   public function LevelsStatus()
   {
     $login = LoadModule("api", "login");
-    $res = db::Query("WITH last_matrix AS
-    (
-      SELECT max(nid) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
-    ) SELECT id, level, matrix.is_completed(id, 2) as status FROM last_matrix", array($login->UID()));
+    $res = db::Query("WITH last_quests AS
+(
+   SELECT max(id) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
+), quest AS
+(
+  SELECT finances.quests.* FROM finances.quests, last_quests WHERE last_quests.id=quests.id
+) SELECT nid as id, level, matrix.is_completed(nid, 2) as status FROM quest;", array($login->UID()));
     $ret = array();
     foreach ($res as $t)
-      if ($t['status'] == 'f')
-        $ret[$t['level']] = $t['id'];
-      else
-        $ret[$t['level']] = false;
+	  if ($t['id'] == null)
+	    $ret[$t['level']] = true;
+	  else
+	  {
+        if ($t['status'] == 'f')
+          $ret[$t['level']] = $t['id'];
+        else
+          $ret[$t['level']] = false;
+	  }
     for ($i = 0; $i < 8; $i++)
       if (!isset($ret[$i]))
         $ret[$i] = false;
     return $ret;
+  }
+  
+  protected function ShowLevelCreate( $level )
+  {
+    $login = LoadModule('api', 'login');
+    $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
+	  array($login->UID(), $level), true);
+	return $this->ShowMatrixCreate($row['id']);
   }
 
   protected function ShowMatrixCreate( $qid )

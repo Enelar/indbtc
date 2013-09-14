@@ -66,15 +66,15 @@ class finances extends api
 	$quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
     
-    $matrix_price = self::$levels[$level];
+    $matrix_price = self::$levels[$quest['level']];
     $total_price = $matrix_price * 2;
     $line_price = $total_price * 0.1;
 
-    $this->Line($quest, $parents, $line_price);
+    $this->Line($qid, $parents, $line_price);
+	$matrix = LoadModule('api', 'matrix');
+    $this->AddBill($qid, $matrix->NodeOwner($matrix->GetGrandParent($quest['nid'])), $matrix_price);
 
-    $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
-
-    if ($this->CheckQuest($quest))
+    if ($this->CheckQuest($qid))
     {
       db::Query("COMMIT;");
       return $quest;
@@ -163,7 +163,7 @@ class finances extends api
       $this->AddBill($quest, $p, $amount, $i++);
   }
 
-  private function CheckQuest( $quest )
+  public function CheckQuest( $quest )
   {
     $row = db::Query("SELECT count(*) FROM finances.sys_bills WHERE quest=$1", array($quest), true);
     return $row['count'] == self::$count_bills;

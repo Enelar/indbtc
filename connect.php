@@ -27,6 +27,9 @@ class db
       debug_print_backtrace();
 
     $res = pg_query_params($q, $p);
+	//debug_print_backtrace();	
+	if (is_string($res))
+	  assert(false, $res);
 //debug_print_backtrace();
     $ret = array();
     while (($row = pg_fetch_assoc($res)) != false)

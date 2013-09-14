@@ -59,20 +59,28 @@ class cp extends api
 	$res = $this->MoneyEnough($qid);
 	if ($res !== true)
 	  return $res;
-	
+
+	db::Query("BEGIN;");
 	if (!$finances->CheckQuest($qid))
 	{
-	  db::Query("BEGIN;");
 	  $matrix = LoadModule('api', 'matrix');
 	  $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
-	  db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNS id", array($qid, $nid), true);
-	  db::Query("COMMIT;");
+	  db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
+	  db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
 	  if ($finances->GetQuestInfo($qid)['nid'] != $nid)
 	    return array("error" => "Ошибка вступления в матричную систему");
 	  $finances->MakeBills($qid);
 	  assert($finances->CheckQuest($qid));
 	}
-	return $finances->FinishQuest($qid);
+	$res = $finances->FinishQuest($qid);	
+	if ($res == false)
+	{
+	  db::Query("ROLLBACK");
+	  return array("error" => "Finish quest failed");
+	}
+
+    db::Query("COMMIT;");
+	return $res;
   }
   
   public function MoneyEnough( $qid )

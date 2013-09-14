@@ -15,21 +15,15 @@ class cp extends api
   }
   protected function CreateMatrix( $level = 0 )
   {
-    //return array("error" => "В связи с изменениями логики ядра данная функция временно недоступна");
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
     
     $annual = LoadModule('api', 'annual');
-    //if (!$annual->Payed($login->UID()))
-      //return array("error" => "Необходима ежегодная подписка что бы продолжить");
+    
+    $finances = LoadModule('api', 'finances');
+    $qid = $finances->MakeQuest(null, $level);
 
-    //$matrix = LoadModule('api', 'matrix');
-    //$nid = $matrix->AddToFriend($login->UID(), $level);
-	
-	$finances = LoadModule('api', 'finances');
-	$qid = $finances->MakeQuest(null, $level);
-//    var_dump($nid);
     if ($qid == false)
       return array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами.");
 
@@ -51,37 +45,37 @@ class cp extends api
   protected function CommitQuest( $qid )
   {
     $finances = LoadModule('api', 'finances');
-	$quest_info = $finances->GetQuestInfo($qid);
+    $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');
-	if ($quest_info['uid'] != $login->UID())
-	  return array("error" => "Its not your quest");
+    if ($quest_info['uid'] != $login->UID())
+      return array("error" => "Its not your quest");
     $wallet = LoadModule('api', 'wallet');
-	$res = $this->MoneyEnough($qid);
-	$tx = $wallet->GetIncomingTxInfo($quest);
-	if ($res !== true)
-	  return $res;
+    $res = $this->MoneyEnough($qid);
+    $tx = $wallet->GetIncomingTxInfo($quest);
+    if ($res !== true)
+      return $res;
 
-	db::Query("BEGIN;");
-	if (!$finances->CheckQuest($qid))
-	{
-	  $matrix = LoadModule('api', 'matrix');
-	  $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
-	  db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
-	  db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
-	  if ($finances->GetQuestInfo($qid)['nid'] != $nid)
-	    return array("error" => "Ошибка вступления в матричную систему");
-	  $finances->MakeBills($qid);
-	  assert($finances->CheckQuest($qid));
-	}
-	$res = $finances->FinishQuest($qid);	
-	if ($res == false)
-	{
-	  db::Query("ROLLBACK");
-	  return array("error" => "Finish quest failed");
-	}
+    db::Query("BEGIN;");
+    if (!$finances->CheckQuest($qid))
+    {
+      $matrix = LoadModule('api', 'matrix');
+      $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
+      db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
+      db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
+      if ($finances->GetQuestInfo($qid)['nid'] != $nid)
+        return array("error" => "Ошибка вступления в матричную систему");
+      $finances->MakeBills($qid);
+      assert($finances->CheckQuest($qid));
+    }
+    $res = $finances->FinishQuest($qid);    
+    if ($res == false)
+    {
+      db::Query("ROLLBACK");
+      return array("error" => "Finish quest failed");
+    }
 
     db::Query("COMMIT;");
-	return array
+    return array
     (
       "data" =>
         array
@@ -109,7 +103,7 @@ class cp extends api
 
     $wallet = LoadModule('api', 'wallet');
     $balance = $wallet->QuestBalance($quest);
-    //$target = ($quest_info['amount'] - $quest_info['payed']);
+
     $need = $finances->LevelTotalPrice($quest_info['level']) - $balance;
     if (!$wallet->GetTxCount($quest))
       return array(
@@ -219,11 +213,11 @@ class cp extends api
   
   protected function Levels()
   {
-	  $login = LoadModule('api', 'login');
-	  $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
-	  $levels = array();
-	  foreach ($res as $t)
-	    array_push($levels, $t['get_line_count']);
+      $login = LoadModule('api', 'login');
+      $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
+      $levels = array();
+      foreach ($res as $t)
+        array_push($levels, $t['get_line_count']);
     $row = db::Query(
       "SELECT line, sum(payed)
        FROM finances.sys_bills
@@ -233,14 +227,14 @@ class cp extends api
     $recieved = array(0, 0, 0, 0, 0);
     foreach ($row as $t)
       $recieved[$t['line']] = (float)$t['sum'];
-	  return array
-	  (
-	    'data' => array('levels' => $levels, 'recieved' => $recieved),
-	    'design' => 'cp/levels',
-	    'result' => 'content',
-		'script' => array('cp'),
-		'routeline' => 'OnlineConverter',
-	  );
+      return array
+      (
+        'data' => array('levels' => $levels, 'recieved' => $recieved),
+        'design' => 'cp/levels',
+        'result' => 'content',
+        'script' => array('cp'),
+        'routeline' => 'OnlineConverter',
+      );
   }
   
   protected function Settings( $commit = false )
@@ -259,11 +253,11 @@ class cp extends api
   
   protected function Files()
   {
-	  return array
-	  (
-	    'design' => 'cp/files',
-	    'result' => 'content'
-	  );	  
+      return array
+      (
+        'design' => 'cp/files',
+        'result' => 'content'
+      );      
   }
 
 }

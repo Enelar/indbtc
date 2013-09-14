@@ -57,6 +57,7 @@ class cp extends api
 	  return array("error" => "Its not your quest");
     $wallet = LoadModule('api', 'wallet');
 	$res = $this->MoneyEnough($qid);
+	$tx = $wallet->GetIncomingTxInfo($quest);
 	if ($res !== true)
 	  return $res;
 
@@ -80,7 +81,19 @@ class cp extends api
 	}
 
     db::Query("COMMIT;");
-	return $res;
+	return return array
+    (
+      "data" =>
+        array
+        (
+          "transaction" => $res,
+          "outcomming_url" =>
+            "https://blockchain.info/tx/".$res,
+          "incomming_url" => 
+            "https://blockchain.info/tx/{$tx['txid']}"
+        ),
+      "reset" => "#api/cp"
+    );;
   }
   
   public function MoneyEnough( $qid )

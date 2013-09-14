@@ -81,7 +81,7 @@ class cp extends api
 	}
 
     db::Query("COMMIT;");
-	return return array
+	return array
     (
       "data" =>
         array

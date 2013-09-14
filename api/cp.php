@@ -19,7 +19,9 @@ class cp extends api
     if (!$login->IsLogined())
       return array("error" => "Login required");
     
-    $annual = LoadModule('api', 'annual');
+    $m = LoadModule('api', 'matrix');
+    if ($m->LevelsStatus()[$level] != false)
+      return array("reset" => "#api/cp");
     
     $finances = LoadModule('api', 'finances');
     $qid = $finances->MakeQuest(null, $level);

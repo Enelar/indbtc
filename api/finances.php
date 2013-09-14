@@ -45,12 +45,12 @@ class finances extends api
   public function MakeQuest( $node = null, $level = 0 )
   {
     $matrix = IncludeModule('api', 'matrix');
-	$uid = LoadModule('api', 'login')->UID();
+    $uid = LoadModule('api', 'login')->UID();
     if ($uid == false)
       return false;
-	assert($node == null);
-	$row = db::Query("INSERT INTO finances.quests (uid, level, ip) VALUES ($1, $2, $3) RETURNING id",
-	  array($uid, $level, _ip_), true);
+    assert($node == null);
+    $row = db::Query("INSERT INTO finances.quests (uid, level, ip) VALUES ($1, $2, $3) RETURNING id",
+    array($uid, $level, _ip_), true);
     return $row['id'];
   }
   
@@ -63,7 +63,7 @@ class finances extends api
   {
     db::Query("BEGIN;");
 
-	$quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
+    $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
     
     $matrix_price = self::$levels[$quest['level']];
@@ -71,7 +71,7 @@ class finances extends api
     $line_price = $total_price * 0.1;
 
     $this->Line($qid, $parents, $line_price);
-	$matrix = LoadModule('api', 'matrix');
+    $matrix = LoadModule('api', 'matrix');
     $this->AddBill($qid, $matrix->NodeOwner($matrix->GetGrandParent($quest['nid'])), $matrix_price);
 
     if ($this->CheckQuest($qid))
@@ -86,22 +86,22 @@ class finances extends api
   
   public function GetQuestInfo( $qid )
   {
-	return db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), 1);
+    return db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), 1);
   }
 
   private function GetParents( $node = null, $count = 5 )
   {
     if ($node != null)
-	{
-	  $matrix = LoadModule('api', 'matrix');
-	  $uid = $matrix->NodeOwner($node);
-	}
-	else
-	  $uid = LoadModule('api', 'login')->UID();
-    $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
-    $ret = array();
-    foreach ($parents as $parent)
-      array_push($ret, $parent["get_line_parents"]);
+    {
+      $matrix = LoadModule('api', 'matrix');
+      $uid = $matrix->NodeOwner($node);
+    }
+    else
+      $uid = LoadModule('api', 'login')->UID();
+      $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
+      $ret = array();
+      foreach ($parents as $parent)
+        array_push($ret, $parent["get_line_parents"]);
     return $ret;
   }
 

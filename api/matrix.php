@@ -242,15 +242,15 @@ class matrix extends api
 ) SELECT nid as id, level, matrix.is_completed(nid, 2) as status FROM quest;", array($login->UID()));
     $ret = array();
     foreach ($res as $t)
-	  if ($t['id'] == null)
-	    $ret[$t['level']] = true;
-	  else
-	  {
+    if ($t['id'] == null)
+      $ret[$t['level']] = true;
+    else
+    {
         if ($t['status'] == 'f')
           $ret[$t['level']] = $t['id'];
         else
           $ret[$t['level']] = false;
-	  }
+    }
     for ($i = 0; $i < 8; $i++)
       if (!isset($ret[$i]))
         $ret[$i] = false;
@@ -261,8 +261,8 @@ class matrix extends api
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
-	  array($login->UID(), $level), true);
-	return $this->ShowMatrixCreate($row['id']);
+    array($login->UID(), $level), true);
+  return $this->ShowMatrixCreate($row['id']);
   }
 
   protected function ShowMatrixCreate( $qid )
@@ -276,11 +276,11 @@ class matrix extends api
     //$protected = $bitcoin->ProtectWithCallback($input_wallet);
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
-	
+  
     $tax = finances::$tax;
     $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
-	if ($amount <= $tax)
-	  return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
+  if ($amount <= $tax)
+    return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
     return array
     (
       "data" =>

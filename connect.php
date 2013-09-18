@@ -1,5 +1,48 @@
 <?php
 
+class db_transaction
+{
+  private $name;
+  private $child;
+
+  public function db_transaction( $child )
+  {
+    $this->child = $child !== false;
+    if (is_string($child))
+      $this->name = $child;
+    else
+      $this->name = md5(microtime());
+    $this->Begin();
+  }
+  
+  private function Begin()
+  {
+    if ($this->child)
+      db::Query("BEGIN");
+    else
+      db::Query("SAVEPOINT {$this->name};");
+  }
+
+  public function Rollback()
+  {
+    if ($this->child)
+    {
+      db::Query("ROLLBACK TO SAVEPOINT {$this->name};");
+      db::Query("RELEASE SAVEPOINT {$this->name};");
+    }
+    else
+      db::Query("ROLLBACK;");
+  }
+  
+  public function Commit()
+  {
+    if ($this->child)
+      db::Query("RELEASE SAVEPOINT {$this->name};");
+    else
+      db::Query("COMMIT;");
+  }
+}
+
 class db
 {
   private static $db = null;
@@ -42,6 +85,18 @@ class db
   {
     self::RequireConnect();
     return pg_query($q);
+  }
+
+  public static function Begin()
+  {
+    return new db_transaction($this->InTransaction());
+  }
+  
+  public static function InTransaction()
+  {
+    self::RequireConnect();
+    $stat = pg_transaction_status($db);
+    return $stat === PGSQL_TRANSACTION_ACTIVE || $stat === PGSQL_TRANSACTION_INTRANS;
   }
 }
 

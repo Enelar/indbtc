@@ -34,6 +34,13 @@ class sms extends api
     return $this->Send($row['phone'], $message);
   }
   
+  protected function ManualSend( $uid, $message )
+  {
+    if (_ip_ != '213.21.7.6')
+      return false;
+    return $this->SendUID($uid, $message);
+  }
+  
   private function WarningUncommited( )
   {
     $res = db::Query("SELECT * FROM matrix.nodes WHERE commited=false");

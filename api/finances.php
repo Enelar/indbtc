@@ -61,11 +61,7 @@ class finances extends api
   
   public function MakeBills( $qid )
   {
-    $in_trans = db::InTransaction();
-    if (!$in_trans)
-      db::Query("BEGIN;");
-    else
-      db::Query("SAVEPOINT MakeBills;");
+    $transaction = db::Begin();
 
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
@@ -80,19 +76,10 @@ class finances extends api
 
     if ($this->CheckQuest($qid))
     {
-      if (!$in_trans)
-        db::Query("COMMIT;");
-      else
-        db::Query("RELEASE SAVEPOINT MakeBills;");
+      $transaction->Commit();
       return $quest;
     }
-    if (!$in_trans)
-      db::Query("ROLLBACK;");
-    else
-    {
-      db::Query("ROLLBACK TO SAVEPOINT MakeBills;");
-      db::Query("RELEASE SAVEPOINT MakeBills;");
-    }
+    $transaction->Rollback();
     return false;  
   }
   
@@ -274,8 +261,9 @@ class finances extends api
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
+    $bitcoin = LoadModule('api', 'bitcoin');
     db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $wallet->GetFirstSourceAddress()));
+      array($quest_info['uid'], $bitcoin->GetSourceByTransaction($transaction)));
 
     $sms = LoadModule('api', 'sms');
     $sms->TellAboutFinishedQuest($quest);

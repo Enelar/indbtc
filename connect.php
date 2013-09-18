@@ -18,7 +18,10 @@ class db_transaction
   private function Begin()
   {
     if ($this->child)
-      db::Query("BEGIN");
+    {
+      assert(!db::InTransaction());
+      db::Query("BEGIN;");
+    }
     else
       db::Query("SAVEPOINT {$this->name};");
   }
@@ -89,7 +92,7 @@ class db
 
   public static function Begin()
   {
-    return new db_transaction($this->InTransaction());
+    return new db_transaction(self::InTransaction());
   }
   
   public static function InTransaction()

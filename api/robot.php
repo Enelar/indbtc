@@ -19,14 +19,28 @@ class robot extends api
 	if (_ip_ == '213.21.7.6')
 	  $login->DoLogin($uid);
   }
-  /* should ignore empty wallets!
+  /* should ignore empty wallets! */
   protected function FixAddress()
   {
-    $rows = db::Query("SELECT id, uid FROM finances.quests");
+    $rows = db::Query("SELECT min(id) as id, uid, (SELECT wallet FROM finances.accounts WHERE accounts.uid=quests.uid) FROM finances.quests GROUP BY uid ORDER BY uid ASC;");
     $wallet = LoadModule('api', 'wallet');
+    $bitcoin = LoadModule('api', 'bitcoin');
+    $ret = array();
     foreach ($rows as $row)
-      db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-        array($row['uid'], $wallet->GetFirstSourceAddress($row['id'])));
+    {
+      if ($row['wallet'] === null)
+      {
+        array_push($ret, $row['uid']);
+        echo "<hr>{$row['uid']}<br>";        
+        echo $tx = $wallet->GetFirstSourceTxid($row['id']);
+        echo "<br>";
+        echo $source = $bitcoin->GetSourceByTransaction($tx);
+        if (strlen($source))        
+          db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
+            array($row['uid'], $source));
+      }
+    }
+    return $ret;
   }
-  */
+  /* 98 1HnL368hXZpVGGcjjRZU1MsLcuyGSB3JNZ */
 }

@@ -45,7 +45,7 @@ class cp extends api
     );
   }
   
-  protected function CommitQuest( $qid, $without_transaction )
+  protected function CommitQuest( $qid )
   {
     if (_ip_ != '213.21.7.6')
       return array("error" => "Ведется разработка");
@@ -59,8 +59,8 @@ class cp extends api
     $tx = $wallet->GetIncomingTxInfo($quest);
     if ($res !== true)
       return $res;
+    $transaction = db::Begin();
 
-    db::Query("BEGIN;");
     if (!$finances->CheckQuest($qid))
     {
       $matrix = LoadModule('api', 'matrix');
@@ -76,11 +76,11 @@ class cp extends api
     $res = $finances->FinishQuest($qid);    
     if ($res == false  || isset($res['error']))
     {
-      db::Query("ROLLBACK");
+      $transaction->Rollback();
       return array("error" => "Finish quest failed");
     }
 
-    db::Query("COMMIT;");
+    $transaction->Commit();
     return array
     (
       "data" =>
@@ -117,7 +117,7 @@ class cp extends api
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest)
         );
 
-    $sys_dest_addr = $wallet->GetFirstSourceAddress($quest);
+    //$sys_dest_addr = $wallet->GetFirstSourceAddress($quest);
     $tx = $wallet->GetIncomingTxInfo($quest);
     if (!$sys_dest_addr)
       return array(

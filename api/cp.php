@@ -70,7 +70,7 @@ class cp extends api
       assert($finances->CheckQuest($qid));
     }
     $res = $finances->FinishQuest($qid);    
-    if ($res == false)
+    if ($res == false  || isset($res['error']))
     {
       db::Query("ROLLBACK");
       return array("error" => "Finish quest failed");

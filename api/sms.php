@@ -21,7 +21,7 @@ class sms extends api
     foreach ($rows as $row)
 	{
 	  $amount = round($row['payed'], 3);
-      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc от №{$quest['uid']}, средства в течении суток.");
+      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc от №{$quest['uid']}.");
 	}
   }
   

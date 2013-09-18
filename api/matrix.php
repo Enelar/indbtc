@@ -39,7 +39,7 @@ class matrix extends api
       return array("error" => "IP undefined");
           
     $row = db::Query("SELECT matrix.add_to_system($1, $2, $3)", array($uid, $level, _ip_), true);
-
+    //var_dump($row);
     assert(count($row));
     //var_dump($row);
     return $row['add_to_system'];

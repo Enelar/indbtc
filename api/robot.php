@@ -19,4 +19,14 @@ class robot extends api
 	if (_ip_ == '213.21.7.6')
 	  $login->DoLogin($uid);
   }
+  /* should ignore empty wallets!
+  protected function FixAddress()
+  {
+    $rows = db::Query("SELECT id, uid FROM finances.quests");
+    $wallet = LoadModule('api', 'wallet');
+    foreach ($rows as $row)
+      db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
+        array($row['uid'], $wallet->GetFirstSourceAddress($row['id'])));
+  }
+  */
 }

@@ -15,6 +15,7 @@ class cp extends api
   }
   protected function CreateMatrix( $level = 0 )
   {
+    return array("error" => "В связи с плановым обновлением системы функция временно недоступна.");
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
@@ -44,8 +45,10 @@ class cp extends api
     );
   }
   
-  protected function CommitQuest( $qid )
+  protected function CommitQuest( $qid, $without_transaction )
   {
+    if (_ip_ != '213.21.7.6')
+      return array("error" => "Ведется разработка");
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');
@@ -66,7 +69,8 @@ class cp extends api
       db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
       if ($finances->GetQuestInfo($qid)['nid'] != $nid)
         return array("error" => "Ошибка вступления в матричную систему");
-      $finances->MakeBills($qid);
+      if (!$finances->MakeBills($qid))
+        return array("error" => "Не удалось создать адреса");
       assert($finances->CheckQuest($qid));
     }
     $res = $finances->FinishQuest($qid);    

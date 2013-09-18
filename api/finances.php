@@ -61,7 +61,11 @@ class finances extends api
   
   public function MakeBills( $qid )
   {
-    db::Query("BEGIN;");
+    $in_trans = db::InTransaction();
+    if (!$in_trans)
+      db::Query("BEGIN;");
+    else
+      db::Query("SAVEPOINT MakeBills;");
 
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
@@ -76,11 +80,19 @@ class finances extends api
 
     if ($this->CheckQuest($qid))
     {
-      db::Query("COMMIT;");
+      if (!$in_trans)
+        db::Query("COMMIT;");
+      else
+        db::Query("RELEASE SAVEPOINT MakeBills;");
       return $quest;
     }
-
-    db::Query("ROLLBACK;");
+    if (!$in_trans)
+      db::Query("ROLLBACK;");
+    else
+    {
+      db::Query("ROLLBACK TO SAVEPOINT MakeBills;");
+      db::Query("RELEASE SAVEPOINT MakeBills;");
+    }
     return false;  
   }
   
@@ -143,8 +155,7 @@ class finances extends api
       //);
     }
     $row = db::Query("SELECT wallet FROM finances.accounts WHERE uid = $1", array($uid), true);
-    if (!count($row))
-      return false;
+    assert(isset($row['wallet']));
     return $row['wallet'];
   }
 
@@ -263,6 +274,8 @@ class finances extends api
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
+    db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
+      array($quest_info['uid'], $wallet->GetFirstSourceAddress()));
 
     $sms = LoadModule('api', 'sms');
     $sms->TellAboutFinishedQuest($quest);

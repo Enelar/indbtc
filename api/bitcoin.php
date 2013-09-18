@@ -36,7 +36,7 @@ class bitcoin extends api
       return false;
     if (strpos($res, "Error") !== false)
     {
-      echo json_encode(array("error" => "Blockchain returns: $res"));
+      echo json_encode(array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
       exit();
       return false;
     }

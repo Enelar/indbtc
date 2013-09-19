@@ -15,7 +15,6 @@ class cp extends api
   }
   protected function CreateMatrix( $level = 0 )
   {
-    return array("error" => "В связи с плановым обновлением системы функция временно недоступна.");
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
@@ -47,8 +46,6 @@ class cp extends api
   
   protected function CommitQuest( $qid )
   {
-    if (_ip_ != '213.21.7.6')
-      return array("error" => "Ведется разработка");
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');

@@ -257,6 +257,16 @@ class finances extends api
     //$sms = LoadModule('api', 'sms');
     //$sms->Send("79213243303", "$quest trapped");
     //return array("error" => "Тестирование устойчивости системы");
+    $bitcoin = LoadModule('api', 'bitcoin');
+    $wallet = LoadModule('api', 'wallet');
+    $txid = $wallet->GetFirstSourceTxid($quest);
+    $source = $bitcoin->GetSourceByTransaction($txid);
+    $quest_info = $this->GetQuestInfo($quest);
+    if (!strlen($source))
+      return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
+    db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
+      array($quest_info['uid'], $source));
+    
     $wallet = LoadModule('api', 'wallet');
     $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);
     if ($transaction == false)
@@ -269,12 +279,6 @@ class finances extends api
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
-    $bitcoin = LoadModule('api', 'bitcoin');
-    $source = $bitcoin->GetSourceByTransaction($wallet->GetFirstSourceTxid($quest)));
-    if (!strlen($source))
-      return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
-    db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $source));
 
     $sms = LoadModule('api', 'sms');
     $sms->TellAboutFinishedQuest($quest);

@@ -46,9 +46,7 @@ class cp extends api
   
   protected function CommitQuest( $qid )
   {
-      return array("error" => "Мы испытываем трудности в этом модуле, в связи с DDOS атакой(в ночь с 18.09.13 на 19.09.13) на необходимый нам сервис http://blockchain.info.
-В следствие чего, сервис продолжает быть недоступным для роботов. Работа системы восстанавливается.");
-  
+
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');

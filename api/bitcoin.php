@@ -143,6 +143,7 @@ class bitcoin extends api
   
   public function ReserveGetSourceByTransaction( $txid )
   {
+    var_dump("Reserved");
     if (!strlen($txid))
       return false;  
     $res = http_request("http://blockexplorer.com/tx/{$txid}");

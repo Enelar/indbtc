@@ -9,7 +9,7 @@ function http_request($uri, $time_out = 10, $headers = 0)
     // Set URI
     curl_setopt($ch, CURLOPT_URL, trim($uri));
 
-    curl_setopt($ch, CURLOPT_HEADER, 1);
+    //curl_setopt($ch, CURLOPT_HEADER, 1);
     curl_setopt($ch, CURLOPT_HTTPGET, 1);
 
     // 1 - if output is not needed on the browser

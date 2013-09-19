@@ -1,14 +1,16 @@
 <?php
 
-function http_request($uri, $time_out = 2, $headers = 0)
+function http_request($uri, $time_out = 10, $headers = 0)
 {
+  //  return file_get_contents(trim($uri));
     // Initializing
     $ch = curl_init(); 
 
     // Set URI
     curl_setopt($ch, CURLOPT_URL, trim($uri));
 
-    //curl_setopt($ch, CURLOPT_HEADER, $headers);
+    curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_HTTPGET, 1);
 
     // 1 - if output is not needed on the browser
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -20,8 +22,9 @@ function http_request($uri, $time_out = 2, $headers = 0)
     $result = curl_exec($ch);
     
     if ($result === false)
-      echo curl_error($ch);
-
+    {
+      //echo (curl_error($ch))." Trying to access $uri GET";
+    }
     // Closing the channel
     curl_close($ch);
 

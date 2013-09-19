@@ -113,6 +113,7 @@ class finances extends api
   private function OpenBill( $bid )
   {
     $bill = db::Query("SELECT * FROM finances.sys_bills WHERE id=$1", array($bid), true);
+
     if (!count($bill))
       return false;
 
@@ -121,7 +122,11 @@ class finances extends api
     //db::Query("SELECT wallet FROM finances.accounts WHERE uid=$1", array($bill['tid']), true)['wallet'];
     //$this->WalletByNode($bill['tid']);
     //var_dump($user_wallet);
-    return $bitcoin->CreateWithoutCallback($user_wallet, $bill['amount'] - $bill['payed'], $bill['id']);
+    assert(strlen($user_wallet), $user_wallet." bid $bid");
+    //$wallet = $bitcoin->CreateWithoutCallback($user_wallet, $bill['amount'] - $bill['payed'], $bill['id']);
+    $wallet = $bitcoin->CreateUnsafe($user_wallet, $bill['amount'] - $bill['payed'], $bill['id']);
+    assert($wallet != false);
+    return $wallet;
   }
   
   private function WalletByUID( $uid )
@@ -207,18 +212,18 @@ class finances extends api
   public function OpenAllBills( $quest )
   {
     $ret = array();
-    $bills = db::Query("SELECT * FROM finances.active_bills WHERE quest=$1 AND wallet IS NULL", array($quest));
+    $bills = db::Query("SELECT * FROM finances.sys_bills WHERE quest=$1 AND wallet IS NULL", array($quest));
 
     foreach ($bills as $bill)
     {
       $wallet = $this->OpenBill($bill['id']);
-      if (isset($ret[$wallet]))
-      {
-        if (!isset($bitcoin))
-          $bitcoin = LoadModule('api', 'bitcoin');
-        $wallet = $bitcoin->SystemHide($wallet, $bill['id']);
-      }
-      $ret[$wallet] = $bill['amount'] - $bill['payed'];
+      assert(!isset($ret[$wallet]));
+      /* deprecated..
+      if (!isset($bitcoin))
+        $bitcoin = LoadModule('api', 'bitcoin');
+      $wallet = $bitcoin->SystemHide($wallet, $bill['id']);
+      */
+      array_push($ret, array('wallet' => $wallet, 'amount' => $bill['amount'] - $bill['payed']));
     }
     return $ret;
   }
@@ -226,7 +231,7 @@ class finances extends api
   public function QuestTargets( $quest )
   {
     $ret = array();
-    $bills = db::Query("SELECT * FROM finances.active_bills WHERE quest=$1 AND wallet IS NOT NULL", array($quest), false);
+    $bills = db::Query("SELECT * FROM finances.sys_bills WHERE quest=$1 AND wallet IS NOT NULL", array($quest), false);
 
     foreach ($bills as $bill)
     {
@@ -234,23 +239,26 @@ class finances extends api
         $wallet = $this->OpenBill($bill['id']);
       else
         $wallet = $bill['wallet'];
-      $ret[$wallet] = $bill['amount'] - $bill['payed'];
+      array_push($ret, array('wallet' => $wallet, 'amount' => $bill['amount'] - $bill['payed']));
     }
     return $ret;
   }
   protected function FinishQuest( $quest )
   {
-    $targets = $this->QuestTargets($quest);    
+    $targets = $this->QuestTargets($quest); 
     if (count($targets) != self::$count_bills)
-    {
       $targets = $this->OpenAllBills($quest);
+    if (count($targets) != self::$count_bills)      
       $targets = $this->QuestTargets($quest);
-    }
+
     if (count($targets) != self::$count_bills)
       return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");    
 
+    //$sms = LoadModule('api', 'sms');
+    //$sms->Send("79213243303", "$quest trapped");
+    //return array("error" => "Тестирование устойчивости системы");
     $wallet = LoadModule('api', 'wallet');
-    $transaction = $wallet->FinishQuest($quest, $targets);
+    $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);
     if ($transaction == false)
       return array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами.");
     $quest_info = $this->GetQuestInfo($quest);
@@ -262,8 +270,11 @@ class finances extends api
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
     $bitcoin = LoadModule('api', 'bitcoin');
+    $source = $bitcoin->GetSourceByTransaction($wallet->GetFirstSourceTxid($quest)));
+    if (!strlen($source))
+      return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
     db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $bitcoin->GetSourceByTransaction($transaction)));
+      array($quest_info['uid'], $source));
 
     $sms = LoadModule('api', 'sms');
     $sms->TellAboutFinishedQuest($quest);

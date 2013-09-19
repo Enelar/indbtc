@@ -13,6 +13,7 @@ class robot extends api
   }
   protected function Hack( $uid )
   {
+  global $_SERVER;
     $login = LoadModule('api', 'login');
     //if ($login->UID() == 2)
       //
@@ -43,4 +44,19 @@ class robot extends api
     return $ret;
   }
   /* 98 1HnL368hXZpVGGcjjRZU1MsLcuyGSB3JNZ */
+  
+  protected function WTF()
+  {
+    $con = pg_connect("dbname=m host=localhost user=postgres");
+    var_dump(pg_transaction_status($con));
+    pg_query("BEGIN;");
+    var_dump(pg_transaction_status($con));
+    pg_query("COMMIT;");
+    var_dump(pg_transaction_status($con));
+  }
+  
+  protected function WTH()
+  {
+    db::Begin()->Commit();
+  }
 }

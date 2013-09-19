@@ -25,7 +25,7 @@ class bitcoin extends api
       return false;
     $obj = json_decode($res, true);
     $input = $obj['input_address'];
-    return $input;	  
+    return $input;
   }
   
   public function ProtectWithoutCallback( $wallet )
@@ -58,8 +58,13 @@ class bitcoin extends api
     $input = $this->ProtectWithoutCallback($wallet);
     if (!$input)
       return false;
-    $row = db::Query("UPDATE finances.sys_bills SET wallet=$2 WHERE id=$1 RETURNING id", array($bill_id, $input));
-    return $input;
+    return $this->CreateUnsafe($input, $amount, $bill_id);
+  }
+  
+  public function CreateUnsafe( $wallet, $amount, $bill_id )
+  {
+    $row = db::Query("UPDATE finances.sys_bills SET wallet=$2 WHERE id=$1 RETURNING id", array($bill_id, $wallet));
+    return $wallet;  
   }
   
   public function CreateBill( $wallet, $amount, $bill_id )

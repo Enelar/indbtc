@@ -20,15 +20,23 @@ for (i = 0; i < 8; i++)
   if (levels[i])
   {
     id = levels[i];
-    matrix = matrix_list[id]
-    if (matrix['commited'] == 'f')
+	
+    if (id == true)
     {
-      url = 'api/matrix/ShowMatrixCreate?a='+id;
+      url = 'api/matrix/ShowLevelCreate?a='+i;
       phoxy.SimpleApiRequest(url);
       //SoftLink(url);
     }
     else
+	{
+      matrix = matrix_list[id];	  
+	  if (matrix['commited'] != 't')
+	  {
+	    alert("ejs: Ошибка логики, матрица не подтверждена " + i);
+		continue;
+	  }
       ShowMatrix(i, 'Активный цикл', 'matrix/matrix', {matrix: matrix, level: i});
+	}
   }
   else
   {

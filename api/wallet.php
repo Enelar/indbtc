@@ -89,8 +89,9 @@ class wallet extends api
     }
   }
   
-  public function GetFirstSourceAddress( $quest )
+  protected function GetFirstSourceAddress( $quest )
   {
+    assert(false); // deprecated  
 	$tx = $this->GetIncomingTxInfo($quest);
 	if ($tx["confirmations"] > 5)
 	  return $tx['address'];

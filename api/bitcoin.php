@@ -36,7 +36,7 @@ class bitcoin extends api
       return false;
     if (strpos($res, "Error") !== false)
     {
-      echo json_encode(array("error" => "Blockchain returns: $res"));
+      echo json_encode(array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
       exit();
       return false;
     }
@@ -127,8 +127,23 @@ class bitcoin extends api
   
   public function GetSourceByTransaction( $txid )
   {
+    if (!strlen($txid))
+      return false;
     $res = http_request("https://blockchain.info/tx/{$txid}?format=json");
+    if ($res == false)
+      return $this->ReserveGetSourceByTransaction($txid);
     $obj = json_decode($res, true);
     return $obj["inputs"][0]["prev_out"]["addr"];
+  }
+  
+  public function ReserveGetSourceByTransaction( $txid )
+  {
+    if (!strlen($txid))
+      return false;  
+    $res = http_request("http://blockexplorer.com/tx/{$txid}");
+    list($head, $nice) = explode('Inputs', $res);
+    list($gar, $prefetch) = explode('a href="/address/', $nice);
+    list($address, $del) = explode('"', $prefetch);
+    return $address;
   }
 }

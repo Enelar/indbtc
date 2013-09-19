@@ -42,52 +42,65 @@ class finances extends api
     1093.5
   );
   */
-  public function MakeQuest( $node, $level = 0 )
+  public function MakeQuest( $node = null, $level = 0 )
   {
     $matrix = IncludeModule('api', 'matrix');
-    $uid = $matrix->NodeOwner($node);
-    $n = $matrix->GetNode($node);
-    $level = $n['level'];
+    $uid = LoadModule('api', 'login')->UID();
     if ($uid == false)
       return false;
-    db::Query("BEGIN;");
+    assert($node == null);
+    $row = db::Query("INSERT INTO finances.quests (uid, level, ip) VALUES ($1, $2, $3) RETURNING id",
+    array($uid, $level, _ip_), true);
+    return $row['id'];
+  }
+  
+  public function LevelTotalPrice( $level )
+  {
+    return self::$levels[$level] * 2;
+  }
+  
+  public function MakeBills( $qid )
+  {
+    $transaction = db::Begin();
 
-    $res = db::Query("INSERT INTO finances.quests(uid, nid, ip) VALUES ($1, $2, $3) RETURNING id",
-    array($uid, $node, _ip_), true);
-    $parents = $this->GetParents($node);
-    $quest = $res['id'];
+    $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
+    $parents = $this->GetParents();
     
-    $matrix_price = self::$levels[$level];
+    $matrix_price = self::$levels[$quest['level']];
     $total_price = $matrix_price * 2;
     $line_price = $total_price * 0.1;
 
-    $this->Line($quest, $parents, $line_price);
+    $this->Line($qid, $parents, $line_price);
+    $matrix = LoadModule('api', 'matrix');
+    $this->AddBill($qid, $matrix->NodeOwner($matrix->GetGrandParent($quest['nid'])), $matrix_price);
 
-    $this->AddBill($quest, $matrix->NodeOwner($matrix->GetGrandParent($node)), $matrix_price);
-//    $this->AddBill($quest, null, $total_price * 0.05);
-    if ($this->CheckQuest($quest))
+    if ($this->CheckQuest($qid))
     {
-      db::Query("COMMIT;");
+      $transaction->Commit();
       return $quest;
     }
-
-    db::Query("ROLLBACK;");
-    return false;
+    $transaction->Rollback();
+    return false;  
   }
   
   public function GetQuestInfo( $qid )
   {
-	return db::Query("SELECT * FROM finances.quest_status WHERE id=$1", array($qid), 1);
+    return db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), 1);
   }
 
-  private function GetParents( $node, $count = 5 )
+  private function GetParents( $node = null, $count = 5 )
   {
-    $matrix = LoadModule('api', 'matrix');
-    $uid = $matrix->NodeOwner($node);
-    $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
-    $ret = array();
-    foreach ($parents as $parent)
-      array_push($ret, $parent["get_line_parents"]);
+    if ($node != null)
+    {
+      $matrix = LoadModule('api', 'matrix');
+      $uid = $matrix->NodeOwner($node);
+    }
+    else
+      $uid = LoadModule('api', 'login')->UID();
+      $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
+      $ret = array();
+      foreach ($parents as $parent)
+        array_push($ret, $parent["get_line_parents"]);
     return $ret;
   }
 
@@ -129,8 +142,7 @@ class finances extends api
       //);
     }
     $row = db::Query("SELECT wallet FROM finances.accounts WHERE uid = $1", array($uid), true);
-    if (!count($row))
-      return false;
+    assert(isset($row['wallet']));
     return $row['wallet'];
   }
 
@@ -149,7 +161,7 @@ class finances extends api
       $this->AddBill($quest, $p, $amount, $i++);
   }
 
-  private function CheckQuest( $quest )
+  public function CheckQuest( $quest )
   {
     $row = db::Query("SELECT count(*) FROM finances.sys_bills WHERE quest=$1", array($quest), true);
     return $row['count'] == self::$count_bills;
@@ -249,6 +261,9 @@ class finances extends api
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
+    $bitcoin = LoadModule('api', 'bitcoin');
+    db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
+      array($quest_info['uid'], $bitcoin->GetSourceByTransaction($transaction)));
 
     $sms = LoadModule('api', 'sms');
     $sms->TellAboutFinishedQuest($quest);

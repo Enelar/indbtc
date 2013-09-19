@@ -39,7 +39,7 @@ class matrix extends api
       return array("error" => "IP undefined");
           
     $row = db::Query("SELECT matrix.add_to_system($1, $2, $3)", array($uid, $level, _ip_), true);
-
+    //var_dump($row);
     assert(count($row));
     //var_dump($row);
     return $row['add_to_system'];
@@ -233,56 +233,69 @@ class matrix extends api
   public function LevelsStatus()
   {
     $login = LoadModule("api", "login");
-    $res = db::Query("WITH last_matrix AS
-    (
-      SELECT max(id) as id, level FROM matrix.nodes WHERE uid=$1 GROUP BY level ORDER BY id DESC
-    ) SELECT id, level, matrix.is_completed(id, 2) as status FROM last_matrix", array($login->UID()));
+    $res = db::Query("WITH last_quests AS
+(
+   SELECT max(id) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
+), quest AS
+(
+  SELECT finances.quests.* FROM finances.quests, last_quests WHERE last_quests.id=quests.id
+) SELECT nid as id, level, matrix.is_completed(nid, 2) as status FROM quest;", array($login->UID()));
     $ret = array();
     foreach ($res as $t)
-      if ($t['status'] == 'f')
-        $ret[$t['level']] = $t['id'];
-      else
-        $ret[$t['level']] = false;
+    if ($t['id'] == null)
+      $ret[$t['level']] = true;
+    else
+    {
+        if ($t['status'] == 'f')
+          $ret[$t['level']] = $t['id'];
+        else
+          $ret[$t['level']] = false;
+    }
     for ($i = 0; $i < 8; $i++)
       if (!isset($ret[$i]))
         $ret[$i] = false;
     return $ret;
   }
-
-  protected function ShowMatrixCreate( $nid )
+  
+  protected function ShowLevelCreate( $level )
   {
-    $node = db::Query("SELECT * FROM matrix.nodes WHERE id=$1", array($nid), true);
-    $quest = $this->NodeQuest($nid);
-    //var_dump($quest);
+    $login = LoadModule('api', 'login');
+    $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
+    array($login->UID(), $level), true);
+  return $this->ShowMatrixCreate($row['id']);
+  }
+
+  protected function ShowMatrixCreate( $qid )
+  {
+    $quest = $qid;
     $wallet = LoadModule('api', 'wallet');
-    //debug_print_backtrace();
     $input_wallet = $wallet->GetInputQuestWallet($quest);
     if ($input_wallet == false)
-    {
       return array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us.");
-    }
     //$bitcoin = LoadModule('api', 'bitcoin');
     //$protected = $bitcoin->ProtectWithCallback($input_wallet);
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
-
+  
     $tax = finances::$tax;
-    $amount = $quest_info['amount'] - $quest_info['payed'] + $tax;
+    $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
+  if ($amount <= $tax)
+    return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
     return array
     (
       "data" =>
         array
         (
-          "node" => $nid,
+          "node" => null,
           "quest" => $quest,
           "wallet" => $input_wallet,
           "wallet_qr_url" => phoxy_conf()['site']."api/qr/Bill?wallet={$input_wallet}&amount={$amount}",
           "bitcoin_uri" => "bitcoin:{$input_wallet}?amount={$amount}",
           "amount" => $amount,
-          "level" => $node['level']
+          "level" => $quest_info['level']
         ),
       "design" => "matrix/create",
-      "result" => "matrix_{$node['level']}"
+      "result" => "matrix_{$quest_info['level']}"
     );
   }
 }

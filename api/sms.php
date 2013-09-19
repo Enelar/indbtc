@@ -21,7 +21,7 @@ class sms extends api
     foreach ($rows as $row)
 	{
 	  $amount = round($row['payed'], 3);
-      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc от №{$quest['uid']}, средства в течении суток.");
+      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc от №{$quest['uid']}.");
 	}
   }
   
@@ -32,6 +32,13 @@ class sms extends api
     $row = db::Query("SELECT phone FROM users.logins WHERE id=$1", array($uid), true);
     assert(isset($row['phone']));
     return $this->Send($row['phone'], $message);
+  }
+  
+  protected function ManualSend( $uid, $message )
+  {
+    if (_ip_ != '213.21.7.6')
+      return false;
+    return $this->SendUID($uid, $message);
   }
   
   private function WarningUncommited( )

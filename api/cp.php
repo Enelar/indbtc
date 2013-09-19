@@ -19,18 +19,18 @@ class cp extends api
     if (!$login->IsLogined())
       return array("error" => "Login required");
     
-    $annual = LoadModule('api', 'annual');
-    //if (!$annual->Payed($login->UID()))
-      //return array("error" => "Необходима ежегодная подписка что бы продолжить");
+    $m = LoadModule('api', 'matrix');
+    if ($m->LevelsStatus()[$level] != false)
+      return array("reset" => "#api/cp");
+    
+    $finances = LoadModule('api', 'finances');
+    $qid = $finances->MakeQuest(null, $level);
 
-    $matrix = LoadModule('api', 'matrix');
-    $nid = $matrix->AddToFriend($login->UID(), $level);
-//    var_dump($nid);
-    if ($nid == false)
+    if ($qid == false)
       return array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами.");
 
     $matrix = LoadModule('api', 'matrix', true);
-    $ret = $matrix->ShowMatrixCreate($nid);
+    $ret = $matrix->ShowMatrixCreate($qid);
     return $ret;
   }
 
@@ -43,13 +43,62 @@ class cp extends api
       "data" => array("invite" => $url)
     );
   }
-
-  protected function CommitNode( $node, $force = false )
+  
+  protected function CommitQuest( $qid )
   {
-    $matrix = LoadModule('api', 'matrix');
-    $quest = $matrix->NodeQuest($node);
-    $quest_info = LoadModule('api', 'finances')->GetQuestInfo($quest);
-    if ($quest_info['completed'] == 6)
+    $finances = LoadModule('api', 'finances');
+    $quest_info = $finances->GetQuestInfo($qid);
+    $login = LoadModule('api', 'login');
+    if ($quest_info['uid'] != $login->UID())
+      return array("error" => "Its not your quest");
+    $wallet = LoadModule('api', 'wallet');
+    $res = $this->MoneyEnough($qid);
+    $tx = $wallet->GetIncomingTxInfo($quest);
+    if ($res !== true)
+      return $res;
+    $transaction = db::Begin();
+
+    if (!$finances->CheckQuest($qid))
+    {
+      $matrix = LoadModule('api', 'matrix');
+      $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
+      db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
+      db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
+      if ($finances->GetQuestInfo($qid)['nid'] != $nid)
+        return array("error" => "Ошибка вступления в матричную систему");
+      if (!$finances->MakeBills($qid))
+        return array("error" => "Не удалось создать адреса");
+      assert($finances->CheckQuest($qid));
+    }
+    $res = $finances->FinishQuest($qid);    
+    if ($res == false  || isset($res['error']))
+    {
+      $transaction->Rollback();
+      return array("error" => "Finish quest failed");
+    }
+
+    $transaction->Commit();
+    return array
+    (
+      "data" =>
+        array
+        (
+          "transaction" => $res,
+          "outcomming_url" =>
+            "https://blockchain.info/tx/".$res,
+          "incomming_url" => 
+            "https://blockchain.info/tx/{$tx['txid']}"
+        ),
+      "reset" => "#api/cp"
+    );;
+  }
+  
+  public function MoneyEnough( $qid )
+  {
+    $quest = $qid;
+    $finances = LoadModule('api', 'finances');
+    $quest_info = $finances->GetQuestInfo($quest);
+    if ($quest_info['nid'] != null)
       return array(
       "data" => array("status" => "already", "message" => "Already completed"),
       "error" => "Цикл уже активирован, сейчас мы обновим страницу что бы вы это увидели",
@@ -57,15 +106,15 @@ class cp extends api
 
     $wallet = LoadModule('api', 'wallet');
     $balance = $wallet->QuestBalance($quest);
-    $target = ($quest_info['amount'] - $quest_info['payed']);
-    $need = $target - $balance;
+
+    $need = $finances->LevelTotalPrice($quest_info['level']) - $balance;
     if (!$wallet->GetTxCount($quest))
       return array(
         "error" => "Мы ждем оплаты. (сейчас произойдет переход на страницу кошелька)",
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest)
         );
 
-    $sys_dest_addr = $wallet->GetFirstSourceAddress($quest);
+    //$sys_dest_addr = $wallet->GetFirstSourceAddress($quest);
     $tx = $wallet->GetIncomingTxInfo($quest);
     if (!$sys_dest_addr)
       return array(
@@ -78,6 +127,14 @@ class cp extends api
 Требуется: {$target}, баланс: {$balance}.
 (Если вы выслали полную сумму, то рекомендуем подождать пол часа, деньги просто не дошли до нас)",
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest));
+    return true;  
+  }
+
+  protected function CommitNode( $node, $force = false )
+  {
+    return array("error" => "deprecated");
+    $matrix = LoadModule('api', 'matrix');
+    $quest = $matrix->NodeQuest($node);
 
     $finances = LoadModule('api', 'finances');
     $ret = $finances->FinishQuest($quest);
@@ -159,11 +216,11 @@ class cp extends api
   
   protected function Levels()
   {
-	  $login = LoadModule('api', 'login');
-	  $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
-	  $levels = array();
-	  foreach ($res as $t)
-	    array_push($levels, $t['get_line_count']);
+      $login = LoadModule('api', 'login');
+      $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
+      $levels = array();
+      foreach ($res as $t)
+        array_push($levels, $t['get_line_count']);
     $row = db::Query(
       "SELECT line, sum(payed)
        FROM finances.sys_bills
@@ -173,14 +230,14 @@ class cp extends api
     $recieved = array(0, 0, 0, 0, 0);
     foreach ($row as $t)
       $recieved[$t['line']] = (float)$t['sum'];
-	  return array
-	  (
-	    'data' => array('levels' => $levels, 'recieved' => $recieved),
-	    'design' => 'cp/levels',
-	    'result' => 'content',
-		'script' => array('cp'),
-		'routeline' => 'OnlineConverter',
-	  );
+      return array
+      (
+        'data' => array('levels' => $levels, 'recieved' => $recieved),
+        'design' => 'cp/levels',
+        'result' => 'content',
+        'script' => array('cp'),
+        'routeline' => 'OnlineConverter',
+      );
   }
   
   protected function Settings( $commit = false )
@@ -199,11 +256,11 @@ class cp extends api
   
   protected function Files()
   {
-	  return array
-	  (
-	    'design' => 'cp/files',
-	    'result' => 'content'
-	  );	  
+      return array
+      (
+        'design' => 'cp/files',
+        'result' => 'content'
+      );      
   }
 
 }

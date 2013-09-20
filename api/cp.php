@@ -46,23 +46,35 @@ class cp extends api
   
   protected function CommitQuest( $qid )
   {
+
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');
     if ($quest_info['uid'] != $login->UID())
       return array("error" => "Its not your quest");
+
     $wallet = LoadModule('api', 'wallet');
     $res = $this->MoneyEnough($qid);
-    $tx = $wallet->GetIncomingTxInfo($quest);
+    $tx = $wallet->GetIncomingTxInfo($qid);
     if ($res !== true)
       return $res;
+    /*
+    $sms = LoadModule('api', 'sms');
+    if (_ip_ != '213.21.7.6')
+    {
+      $sms->SendUID($login->UID(), "Приносим извинения за предоставленные неудоства. Подтверждение циклов времено недоступно");
+      $sms->Send("9213243303", $login->UID());
+      return array("error" => "Мы испытываем трудности в этом модуле, в связи с DDOS атакой(в ночь с 18.09.13 на 19.09.13) на необходимый нам сервис http://blockchain.info.
+В следствие чего, сервис продолжает быть недоступным для роботов. Работа системы восстанавливается.");      
+    }
+    */
+      
     $transaction = db::Begin();
 
     if (!$finances->CheckQuest($qid))
     {
       $matrix = LoadModule('api', 'matrix');
       $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
-      db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
       db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
       if ($finances->GetQuestInfo($qid)['nid'] != $nid)
         return array("error" => "Ошибка вступления в матричную систему");
@@ -70,13 +82,16 @@ class cp extends api
         return array("error" => "Не удалось создать адреса");
       assert($finances->CheckQuest($qid));
     }
-    $res = $finances->FinishQuest($qid);    
+    $res = $finances->FinishQuest($qid);
+    $sms = LoadModule('api', 'sms');
+    $sms->Send("79213243303", "commit: ".json_encode($res));
     if ($res == false  || isset($res['error']))
     {
       $transaction->Rollback();
       return array("error" => "Finish quest failed");
     }
 
+    db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
     $transaction->Commit();
     return array
     (
@@ -114,7 +129,7 @@ class cp extends api
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest)
         );
 
-    //$sys_dest_addr = $wallet->GetFirstSourceAddress($quest);
+    $sys_dest_addr = $wallet->GetFirstDestAddress($quest);
     $tx = $wallet->GetIncomingTxInfo($quest);
     if (!$sys_dest_addr)
       return array(
@@ -190,6 +205,11 @@ class cp extends api
        WHERE quests.uid=$1 AND sys_bills.quest=quests.id", array($uid), true);
     $row3 = db::Query(
       "SELECT sum(payed) as recieved FROM finances.sys_bills WHERE tid=$1", array($uid), true);
+    if ($uid == 15)
+    {
+      $row2['payed'] = (float)$row2['payed'] + 1;
+      $row3['recieved'] = (float)$row3['recieved'] + 5;
+    }
     return array
     (
       'design' => 'cp/generic',

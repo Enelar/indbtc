@@ -131,15 +131,17 @@ class login extends api
     } while (strrchr($origin, '/'));
     $pass = substr($origin, 0, -1);
     $hash = $this->PasswordHash($pass);
-    $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING email", array($email, $hash), true);
+    $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING id", array($email, $hash), true);
 
-    if (!isset($ret['email']))
+    if (!isset($ret['id']))
       return array("error" => "User not found");
+    $sms = LoadModule('api', 'sms');
+    $sms->SendUID($ret['id'], "По вашей просьбе был произведен сброс пароля: $pass");
 $headers   = array();
 $headers[] = "MIME-Version: 1.0";
 $headers[] = "Content-type: text/plain; charset=utf-8"; 
 $headers[] = "From: regbot@indbtc.com";
-    mail($ret['email'], "Independence limited password reset", "
+    mail($email, "Independence limited password reset", "
 Здравствуйте,
 
 По вашей просьбе был совершен сброс пароля. Ваш новый пароль

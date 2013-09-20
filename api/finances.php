@@ -135,8 +135,9 @@ class finances extends api
     {
       $bitcoin = IncludeModule('api', 'bitcoin');
      // return $bitcoin->ProtectWithoutCallback(
-      return 
-      "1AZkiSpRRv73677RN5srrGD5DpuQSzWCcG"; // system 10 august 2013
+      return
+        "13BXUDTQdrXMhmYg8LbiqDuD3VNGs8Lp53"; // system 19 september 2013
+      //"1AZkiSpRRv73677RN5srrGD5DpuQSzWCcG"; // system 10 august 2013
       //"19FYJUu8n5MGP3HvJU7An2s965q2rapGPM"; // system release
       //"1Fn7z8oJsE1NugRFFziMhFZiGVSG6ckwu6" // final test
       //"16vvjXXYJ2NJFqQ7NkWbtCbfDSHF5SRNiM" // costya test
@@ -264,8 +265,9 @@ class finances extends api
     $quest_info = $this->GetQuestInfo($quest);
     if (!strlen($source))
       return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
-    db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $source));
+    if (!count(db::Query("SELECT * FROM finances.accounts WHERE uid=$1", array($quest_info['uid']), true)))
+      db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)", 
+        array($quest_info['uid'], $source));
     
     $wallet = LoadModule('api', 'wallet');
     $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);

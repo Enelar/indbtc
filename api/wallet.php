@@ -69,6 +69,7 @@ class wallet extends api
 
   public function FinishQuest( $quest, $targets )
   {
+    //var_dump($targets);
     try
     {
       return $this->rpc->sendmany("quest_{$quest}", $targets);
@@ -76,6 +77,18 @@ class wallet extends api
     {
       return false;
     }      
+  }
+  
+  public function FinishQuestWithDoubles( $quest, $targets )
+  {
+    //var_dump($targets);
+    $a = array();
+    foreach ($targets as $t)
+      if (!isset($a[$t['wallet']]))
+        $a[$t['wallet']] = $t['amount'];
+      else
+        $a[$t['wallet']] += $t['amount'];
+    return $this->FinishQuest($quest, $a);
   }
 
   public function Send( $account, $dest_wallet, $amount )
@@ -92,42 +105,48 @@ class wallet extends api
   protected function GetFirstSourceAddress( $quest )
   {
     assert(false); // deprecated  
-	$tx = $this->GetIncomingTxInfo($quest);
-	if ($tx["confirmations"] > 5)
-	  return $tx['address'];
-	return false;
+    return $this->GetFirstDestAddress($quest);
+  }
+  
+  
+  protected function GetFirstDestAddress( $quest )
+  {
+    $tx = $this->GetIncomingTxInfo($quest);
+    if ($tx["confirmations"] > 5)
+      return $tx['address'];
+    return false;
   }
   
   public function GetFirstSourceTxid( $quest )
   {
-	$res = $this->GetIncomingTxInfo($quest);
-	return $res['txid'];	  
+    $res = $this->GetIncomingTxInfo($quest);
+    return $res['txid'];	  
   }
   
   public function GetIncomingTxInfo( $quest )
   {
-	try
-	{
-	   $ret = $this->rpc->listtransactions("quest_{$quest}");
-	   foreach ($ret as $tx)
-	     if ($tx["category"] == "receive")
-	       return $tx;
-	} catch (Exception $e)
-	{
-		return false;
-	}
+    try
+    {
+       $ret = $this->rpc->listtransactions("quest_{$quest}");
+       foreach ($ret as $tx)
+         if ($tx["category"] == "receive")
+           return $tx;
+    } catch (Exception $e)
+    {
+      return false;
+    }
   }
   
   public function GetTxCount( $quest )
   {
-	try
-	{
-	   $ret = $this->rpc->listtransactions("quest_{$quest}");
-	   return count($ret);
-	} catch (Exception $e)
-	{
-		return false;
-	}	  
+    try
+    {
+       $ret = $this->rpc->listtransactions("quest_{$quest}");
+       return count($ret);
+    } catch (Exception $e)
+    {
+      return false;
+    }
   }
 
   public function Move()

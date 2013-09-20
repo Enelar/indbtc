@@ -51,7 +51,7 @@ class sms extends api
 	return $c;
   }
   
-  private function Send( $phone, $message )
+  protected function Send( $phone, $message )
   { // https://www.comtube.com/forum/viewtopic.php?f=33&t=494
     $task_id = time();
     $username = self::$user;

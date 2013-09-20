@@ -16,7 +16,7 @@ for (var name in form)
 <%= name %>
 <% } %>
 </td><td style='text-align: left'>
-<%= input_field_tag(name, value, type, {"requered":"true", "size": "25"}) %>
+<%= input_field_tag(name, value, type, {"requered":"true", "size": "25", "onkeypress": "return LoginKeyPress(event)"}) %>
 </td></tr>
 
 <%

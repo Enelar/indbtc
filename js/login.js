@@ -36,3 +36,11 @@ function InviteDelogin( data )
   else
     history.back();
 }
+
+function LoginKeyPress( e )
+{
+  if (e.keyCode == 13)
+  {
+    $(e.target).parents().find('form').submit();
+  }
+}

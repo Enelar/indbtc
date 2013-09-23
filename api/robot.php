@@ -4,7 +4,7 @@ class robot extends api
 {
   protected function Reserve()
   {
-    db::Query("DELETE FROM matrix.nodes WHERE commited=false AND now()-snap > '24 hour'::interval");
+   // db::Query("DELETE FROM matrix.nodes WHERE commited=false AND now()-snap > '24 hour'::interval");
   }
   protected function Test()
   {
@@ -58,5 +58,28 @@ class robot extends api
   protected function WTH()
   {
     db::Begin()->Commit();
+  }
+
+  protected function Answer( )
+  {
+    return;
+  $headers   = array();
+  $headers[] = "MIME-Version: 1.0";
+  $headers[] = "Content-type: text/plain; charset=utf-8"; 
+  $headers[] = "From: techsup@indbtc.com";
+      mail('cosmos00@bk.ru', "Independence limited techsupport", "
+  Здравствуйте,
+
+  Благодарим вам за обращение.
+
+  Создание цикла отменить невозможно. Для перехода на 2ой уровень достаточно 1 биткоина , не обязательно иметь 6 партнеров. Да ,только ожидание оплаты. Те товарищи что были вокруг вас появятся снова, если активируют циклы на тех же уровнях что и вы.
+
+  Если щелчок на ссылке не работает, скопируйте ссылку в окно вашего браузера или введите непосредственно с клавиатуры.
+
+  С уважением,
+
+  команда Independece
+  ----------------------------- 
+  ".(phoxy_conf()['site']), implode("\r\n", $headers));
   }
 }

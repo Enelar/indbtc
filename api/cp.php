@@ -18,11 +18,11 @@ class cp extends api
     $login = LoadModule('api', 'login');
     if (!$login->IsLogined())
       return array("error" => "Login required");
-    
+
     $m = LoadModule('api', 'matrix');
     if ($m->LevelsStatus()[$level] != false)
       return array("reset" => "#api/cp");
-    
+
     $finances = LoadModule('api', 'finances');
     $qid = $finances->MakeQuest(null, $level);
 
@@ -43,7 +43,7 @@ class cp extends api
       "data" => array("invite" => $url)
     );
   }
-  
+
   protected function CommitQuest( $qid )
   {
 
@@ -72,6 +72,7 @@ class cp extends api
         return array("error" => "Не удалось создать адреса");
       assert($finances->CheckQuest($qid));
     }
+
     $res = $finances->FinishQuest($qid);
     $sms = LoadModule('api', 'sms');
     $sms->Send("79213243303", "commit: ".json_encode($res));
@@ -91,13 +92,13 @@ class cp extends api
           "transaction" => $res,
           "outcomming_url" =>
             "https://blockchain.info/tx/".$res,
-          "incomming_url" => 
+          "incomming_url" =>
             "https://blockchain.info/tx/{$tx['txid']}"
         ),
       "reset" => "#api/cp"
-    );;
+    );
   }
-  
+
   public function MoneyEnough( $qid )
   {
     $quest = $qid;
@@ -132,7 +133,7 @@ class cp extends api
 Требуется: {$target}, баланс: {$balance}.
 (Если вы выслали полную сумму, то рекомендуем подождать пол часа, деньги просто не дошли до нас)",
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest));
-    return true;  
+    return true;
   }
 
   protected function CommitNode( $node, $force = false )
@@ -145,13 +146,14 @@ class cp extends api
     $ret = $finances->FinishQuest($quest);
     if (isset($ret['error']))
       return $ret;
-      
+
     $bitcoin = LoadModule('api', 'bitcoin');
     $input_addr = $bitcoin->GetSourceByTransaction($tx['txid']);
 
     db::Query(
       "INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
       array($quest_info['uid'], $input_addr));
+
     return array
     (
       "data" =>
@@ -160,7 +162,7 @@ class cp extends api
           "transaction" => $ret,
           "outcomming_url" =>
             "https://blockchain.info/tx/".$ret,
-          "incomming_url" => 
+          "incomming_url" =>
             "https://blockchain.info/tx/{$tx['txid']}"
         ),
       "reset" => "#api/cp"
@@ -186,7 +188,7 @@ class cp extends api
     $url = $matrix->GenericInvite();
     $login = LoadModule('api', 'login');
     $uid = $login->UID();
-    
+
     $hash = db::Query("SELECT hash_id FROM users.logins WHERE id=$1", array($uid), true);
     $row1 = db::Query("SELECT date_part('epoch', now() - reg_snap) as snap FROM users.logins WHERE id=$1", array($uid), true);
     $row2 = db::Query(
@@ -223,14 +225,14 @@ class cp extends api
       'data' => array('menu' => array('test', 'lal'))
     );
   }
-  
+
   protected function Levels()
   {
-      $login = LoadModule('api', 'login');
-      $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
-      $levels = array();
-      foreach ($res as $t)
-        array_push($levels, $t['get_line_count']);
+    $login = LoadModule('api', 'login');
+    $res = db::Query("SELECT * FROM users.get_line_count($1, $2)", array($login->UID(), 5));
+    $levels = array();
+    foreach ($res as $t)
+      array_push($levels, $t['get_line_count']);
     $row = db::Query(
       "SELECT line, sum(payed)
        FROM finances.sys_bills
@@ -249,7 +251,7 @@ class cp extends api
         'routeline' => 'OnlineConverter',
       );
   }
-  
+
   protected function Settings( $commit = false )
   {
     if (!$commit)
@@ -263,14 +265,14 @@ class cp extends api
     $login = LoadModule('api', 'login');
     return $login->ChangePassword($_POST['cur'], $_POST['new']);
   }
-  
+
   protected function Files()
   {
       return array
       (
         'design' => 'cp/files',
         'result' => 'content'
-      );      
+      );
   }
 
 }

@@ -26,22 +26,22 @@ class finances extends api
       return false;
     assert($node == null);
     $row = db::Query("INSERT INTO finances.quests (uid, level, ip) VALUES ($1, $2, $3) RETURNING id",
-    array($uid, $level, _ip_), true);
+      array($uid, $level, _ip_), true);
     return $row['id'];
   }
-  
+
   public function LevelTotalPrice( $level )
   {
     return self::$levels[$level] * 2;
   }
-  
+
   public function MakeBills( $qid )
   {
     $transaction = db::Begin();
 
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
-    
+
     $matrix_price = self::$levels[$quest['level']];
     $total_price = $matrix_price * 2;
     $line_price = $total_price * 0.1;
@@ -56,9 +56,9 @@ class finances extends api
       return $quest;
     }
     $transaction->Rollback();
-    return false;  
+    return false;
   }
-  
+
   public function GetQuestInfo( $qid )
   {
     return db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), 1);
@@ -73,10 +73,11 @@ class finances extends api
     }
     else
       $uid = LoadModule('api', 'login')->UID();
-      $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
-      $ret = array();
-      foreach ($parents as $parent)
-        array_push($ret, $parent["get_line_parents"]);
+
+    $parents = db::Query("SELECT * FROM users.get_line_parents($1)", array($uid));
+    $ret = array();
+    foreach ($parents as $parent)
+      array_push($ret, $parent["get_line_parents"]);
     return $ret;
   }
 
@@ -102,7 +103,7 @@ class finances extends api
     assert($wallet != false);
     return $wallet;
   }
-  
+
   private function WalletByUID( $uid )
   {
     if ($uid === null)
@@ -111,6 +112,7 @@ class finances extends api
       return
         "13BXUDTQdrXMhmYg8LbiqDuD3VNGs8Lp53"; // system 19 september 2013
     }
+
     $row = db::Query("SELECT wallet FROM finances.accounts WHERE uid = $1", array($uid), true);
     assert(isset($row['wallet']));
     return $row['wallet'];
@@ -169,7 +171,7 @@ class finances extends api
     if (!$this->IsCompletedQuest($row['quest']))
       return;
 
-      return $row['uid'];
+    return $row['uid'];
   }
 
   public function OpenAllBills( $quest )
@@ -204,14 +206,14 @@ class finances extends api
   }
   protected function FinishQuest( $quest )
   {
-    $targets = $this->QuestTargets($quest); 
+    $targets = $this->QuestTargets($quest);
     if (count($targets) != self::$count_bills)
       $targets = $this->OpenAllBills($quest);
-    if (count($targets) != self::$count_bills)      
+    if (count($targets) != self::$count_bills)
       $targets = $this->QuestTargets($quest);
 
     if (count($targets) != self::$count_bills)
-      return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");    
+      return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");
 
     $bitcoin = LoadModule('api', 'bitcoin');
     $wallet = LoadModule('api', 'wallet');
@@ -221,18 +223,18 @@ class finances extends api
     if (!strlen($source))
       return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
     if (!count(db::Query("SELECT * FROM finances.accounts WHERE uid=$1", array($quest_info['uid']), true)))
-      db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)", 
+      db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
         array($quest_info['uid'], $source));
-    
+
     $wallet = LoadModule('api', 'wallet');
     $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);
     if ($transaction == false)
       return array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами.");
     $quest_info = $this->GetQuestInfo($quest);
 
-    db::Query("UPDATE finances.quests SET tx=$2, tx_snap=now() WHERE id=$1", array($quest, $transaction));        
+    db::Query("UPDATE finances.quests SET tx=$2, tx_snap=now() WHERE id=$1", array($quest, $transaction));
     $matrix = LoadModule('api', 'matrix');
-    $matrix->CommitNode($quest_info['nid']);    
+    $matrix->CommitNode($quest_info['nid']);
     db::Query("UPDATE finances.sys_bills SET payed=amount WHERE quest=$1", array($quest));
 
     $sms = LoadModule('api', 'sms');

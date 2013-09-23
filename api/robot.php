@@ -8,12 +8,12 @@ class robot extends api
   }
   protected function Test()
   {
-    $login = IncludeModule('api', 'login');      
+    $login = IncludeModule('api', 'login');
     var_dump($login->UID());
   }
   protected function Hack( $uid )
   {
-  global $_SERVER;
+    global $_SERVER;
     $login = LoadModule('api', 'login');
     if (_ip_ == '213.21.7.6')
       $login->DoLogin($uid);
@@ -30,11 +30,11 @@ class robot extends api
       if ($row['wallet'] === null)
       {
         array_push($ret, $row['uid']);
-        echo "<hr>{$row['uid']}<br>";        
+        echo "<hr>{$row['uid']}<br>";
         echo $tx = $wallet->GetFirstSourceTxid($row['id']);
         echo "<br>";
         echo $source = $bitcoin->GetSourceByTransaction($tx);
-        if (strlen($source))        
+        if (strlen($source))
           db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
             array($row['uid'], $source));
       }
@@ -42,7 +42,7 @@ class robot extends api
     return $ret;
   }
   /* 98 1HnL368hXZpVGGcjjRZU1MsLcuyGSB3JNZ */
-  
+
   protected function WTF()
   {
     $con = pg_connect("dbname=m host=localhost user=postgres");
@@ -52,7 +52,7 @@ class robot extends api
     pg_query("COMMIT;");
     var_dump(pg_transaction_status($con));
   }
-  
+
   protected function WTH()
   {
     db::Begin()->Commit();
@@ -61,23 +61,23 @@ class robot extends api
   protected function Answer( )
   {
     return;
-  $headers   = array();
-  $headers[] = "MIME-Version: 1.0";
-  $headers[] = "Content-type: text/plain; charset=utf-8"; 
-  $headers[] = "From: techsup@indbtc.com";
-      mail('cosmos00@bk.ru', "Independence limited techsupport", "
-  Здравствуйте,
+    $headers   = array();
+    $headers[] = "MIME-Version: 1.0";
+    $headers[] = "Content-type: text/plain; charset=utf-8";
+    $headers[] = "From: techsup@indbtc.com";
+        mail('cosmos00@bk.ru', "Independence limited techsupport", "
+    Здравствуйте,
 
-  Благодарим вам за обращение.
+    Благодарим вам за обращение.
 
-  Создание цикла отменить невозможно. Для перехода на 2ой уровень достаточно 1 биткоина , не обязательно иметь 6 партнеров. Да ,только ожидание оплаты. Те товарищи что были вокруг вас появятся снова, если активируют циклы на тех же уровнях что и вы.
+    Создание цикла отменить невозможно. Для перехода на 2ой уровень достаточно 1 биткоина , не обязательно иметь 6 партнеров. Да ,только ожидание оплаты. Те товарищи что были вокруг вас появятся снова, если активируют циклы на тех же уровнях что и вы.
 
-  Если щелчок на ссылке не работает, скопируйте ссылку в окно вашего браузера или введите непосредственно с клавиатуры.
+    Если щелчок на ссылке не работает, скопируйте ссылку в окно вашего браузера или введите непосредственно с клавиатуры.
 
-  С уважением,
+    С уважением,
 
-  команда Independece
-  ----------------------------- 
-  ".(phoxy_conf()['site']), implode("\r\n", $headers));
+    команда Independece
+    -----------------------------
+    ".(phoxy_conf()['site']), implode("\r\n", $headers));
   }
 }

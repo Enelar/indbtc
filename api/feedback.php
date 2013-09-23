@@ -12,18 +12,18 @@ class feedback extends api
       "script" => array("feedback")
     );
   }
-  
+
   protected function LeaveFeedback()
   {
     $email = $_POST['email'];
     $text = $_POST['feedback'];
-    
+
     $login = LoadModule('api', 'login');
     if ($login->IsLogined())
       $uid = $login->UID();
     else
       $uid = null;
-    
+
     $row = db::Query("INSERT INTO public.feedback(email, text, ip, uid) VALUES ($1, $2, $3, $4) RETURNING id",
       array($email, $text, _ip_, $uid), true);
     if (!count($row))

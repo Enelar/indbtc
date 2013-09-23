@@ -1,7 +1,7 @@
 <?php
 
 class login extends api
-{  
+{
   protected function Reserve( )
   {
     $this->addons = array
@@ -53,7 +53,7 @@ class login extends api
       "result" => "login_menu"
     );
   }
-  
+
   protected function Request( )
   {
 /*
@@ -91,30 +91,31 @@ class login extends api
   {
     if (!$this->IsLogined())
       return array('error' => 'Личный кабинет доступен только для зарегистрированных пользователей', 'reset' => "#api/login");
-    global $_SESSION;	
+    global $_SESSION;
     return $_SESSION['uid'];
   }
-  
+
   protected function DoLogout()
   {
     global $_SESSION;
     unset($_SESSION['uid']);
     return array("reset" => "true");
   }
-  
+
   public function PasswordHash( $pass )
   {
     return md5($pass."dfhskfjhasdl");
   }
-  
+
   public function ChangePassword( $old, $new )
   {
     if (!$this->IsLogined())
       return array("error" => "You are not logined", "reset" => "/");
     $old = $this->PasswordHash($old);
     $new = $this->PasswordHash($new);
-    $ret = 
-      db::Query("UPDATE users.logins SET pass=$3 WHERE id=$1 AND pass=$2 RETURNING id", array($this->UID(), $old, $new), true);
+    $ret = db::Query("UPDATE users.logins SET pass=$3 WHERE id=$1 AND pass=$2 RETURNING id", 
+      array($this->UID(), $old, $new), true);
+
     if ($ret['id'] != $this->UID())
       return array("error" => "Some error, please retry");
     return array("error" => "Пароль успешно изменен");
@@ -128,6 +129,7 @@ class login extends api
     {
       $origin = base64_encode(md5(time() + microtime(), true));
     } while (strrchr($origin, '/'));
+
     $pass = substr($origin, 0, -1);
     $hash = $this->PasswordHash($pass);
     $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING id", array($email, $hash), true);
@@ -136,10 +138,10 @@ class login extends api
       return array("error" => "User not found");
     $sms = LoadModule('api', 'sms');
     $sms->SendUID($ret['id'], "По вашей просьбе был произведен сброс пароля: $pass");
-$headers   = array();
-$headers[] = "MIME-Version: 1.0";
-$headers[] = "Content-type: text/plain; charset=utf-8"; 
-$headers[] = "From: regbot@indbtc.com";
+    $headers   = array();
+    $headers[] = "MIME-Version: 1.0";
+    $headers[] = "Content-type: text/plain; charset=utf-8";
+    $headers[] = "From: regbot@indbtc.com";
     mail($email, "Independence limited password reset", "
 Здравствуйте,
 
@@ -152,7 +154,7 @@ $headers[] = "From: regbot@indbtc.com";
 С уважением,
 
 команда Independece
------------------------------ 
+-----------------------------
 ".(phoxy_conf()['site']), implode("\r\n", $headers));
     return array("Password changed $pass");
   }

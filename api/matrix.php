@@ -31,19 +31,19 @@ class matrix extends api
     db::Query("COMMIT;");
     return $node;
   }
-  
+
   public function AddToFriend( $uid, $level )
   {
     if (!defined("_ip_"))
       return array("error" => "IP undefined");
-          
+
     $row = db::Query("SELECT matrix.add_to_system($1, $2, $3)", array($uid, $level, _ip_), true);
 
     assert(count($row));
 
     return $row['add_to_system'];
 
-    
+
     $ids = db::Query("SELECT id FROM matrix.nodes WHERE uid=$1 AND matrix.count_childs(childs) < 2 AND commited=true", array($uid));
     foreach ($ids as $id)
       if (($nid = $this->AddChild($uid, $id['id'], $level)) != false)
@@ -81,7 +81,7 @@ class matrix extends api
     }
     return $ret;
   }
-  
+
   public function GetGrandParent( $nid )
   {
     $res = db::Query("SELECT matrix.get_parents($1, 2) as tid OFFSET 1", array($nid), true);
@@ -97,11 +97,11 @@ class matrix extends api
       return false;
     return $res['is_completed'];
   }
-  
+
   protected function Invite( $node, $hash, $force = false )
   {
     global $_SESSION;
-    
+
     $login = LoadModule('api', 'login');
     if ($login->IsLogined())
       if (!$force)
@@ -172,7 +172,7 @@ class matrix extends api
     $res = db::Query("SELECT * FROM matrix.nodes WHERE id=$1", array($node), true);
     if (!count($res))
       return false;
-    return $res;    
+    return $res;
   }
 
   public function NodeQuest( $node )
@@ -207,10 +207,10 @@ class matrix extends api
         continue;
       $child = $ret[$key];
       $pid = $child['parent'];
-      assert(isset($ret[$pid]), $pid);  
+      assert(isset($ret[$pid]), $pid);
       $ret[$pid]['childs']['length'] = 0;
       $ret[$pid]['childs'][$key] = $child;
-      $ret[$key] = &$ret[$pid]['childs'][$key];      
+      $ret[$key] = &$ret[$pid]['childs'][$key];
       $count = count($ret[$pid]['childs']);
       if ($count > 1)
         $count--; // already has length
@@ -228,12 +228,12 @@ class matrix extends api
   {
     $login = LoadModule("api", "login");
     $res = db::Query("WITH last_quests AS
-(
-   SELECT max(id) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
-), quest AS
-(
-  SELECT finances.quests.* FROM finances.quests, last_quests WHERE last_quests.id=quests.id
-) SELECT nid as id, level, matrix.is_completed(nid, 2) as status FROM quest;", array($login->UID()));
+    (
+       SELECT max(id) as id, level FROM finances.quests WHERE uid=$1 GROUP BY level ORDER BY id DESC
+    ), quest AS
+    (
+      SELECT finances.quests.* FROM finances.quests, last_quests WHERE last_quests.id=quests.id
+    ) SELECT nid as id, level, matrix.is_completed(nid, 2) as status FROM quest;", array($login->UID()));
     $ret = array();
     foreach ($res as $t)
     if ($t['id'] == null)
@@ -250,13 +250,13 @@ class matrix extends api
         $ret[$i] = false;
     return $ret;
   }
-  
+
   protected function ShowLevelCreate( $level )
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
     array($login->UID(), $level), true);
-  return $this->ShowMatrixCreate($row['id']);
+    return $this->ShowMatrixCreate($row['id']);
   }
 
   protected function ShowMatrixCreate( $qid )
@@ -269,11 +269,11 @@ class matrix extends api
 
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
-  
+
     $tax = finances::$tax;
     $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
-  if ($amount <= $tax)
-    return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
+    if ($amount <= $tax)
+      return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
     return array
     (
       "data" =>

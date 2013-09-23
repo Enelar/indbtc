@@ -35,12 +35,12 @@ class wallet extends api
     {
       return false;
     }
-    
+
   }
-  
+
   private function GetQuestInputWallet( $quest )
   {
-    $row = db::Query("SELECT input_wallet FROM finances.quests WHERE id=$1", array($quest), true);    
+    $row = db::Query("SELECT input_wallet FROM finances.quests WHERE id=$1", array($quest), true);
     return $row['input_wallet'];
   }
 
@@ -75,9 +75,9 @@ class wallet extends api
     } catch (Exception $e)
     {
       return false;
-    }      
+    }
   }
-  
+
   public function FinishQuestWithDoubles( $quest, $targets )
   {
     $a = array();
@@ -99,14 +99,14 @@ class wallet extends api
       return false;
     }
   }
-  
+
   protected function GetFirstSourceAddress( $quest )
   {
-    assert(false); // deprecated  
+    assert(false); // deprecated
     return $this->GetFirstDestAddress($quest);
   }
-  
-  
+
+
   protected function GetFirstDestAddress( $quest )
   {
     $tx = $this->GetIncomingTxInfo($quest);
@@ -114,13 +114,13 @@ class wallet extends api
       return $tx['address'];
     return false;
   }
-  
+
   public function GetFirstSourceTxid( $quest )
   {
     $res = $this->GetIncomingTxInfo($quest);
-    return $res['txid'];	  
+    return $res['txid'];
   }
-  
+
   public function GetIncomingTxInfo( $quest )
   {
     try
@@ -134,7 +134,7 @@ class wallet extends api
       return false;
     }
   }
-  
+
   public function GetTxCount( $quest )
   {
     try
@@ -161,7 +161,7 @@ class wallet extends api
     } catch (Exception $e)
     {
       return false;
-    }  
+    }
   }
 
   protected function Reserve()

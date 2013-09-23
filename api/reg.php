@@ -1,7 +1,7 @@
 <?php
 
 class reg extends api
-{  
+{
   protected function Reserve( )
   {
     $form = array(
@@ -10,20 +10,21 @@ class reg extends api
       "repass" => "password",
       "phone" => "text",
       );
+
     $capcha = $this->GenCapcha();
     global $_SESSION;
     $_SESSION['capcha'][$capcha["id"]] = $capcha["val"];
-    
+
     if (!isset($_SESSION['friend']))
       $form['referer'] = 'text';
 
-    
+
     $val = array(
       "capcha_id" => $capcha['id'],
       "capcha" => $capcha["val"]
     );
-    
-    
+
+
     $ret = array(
       "design" => "reg/form",
       "headers" => array("cache" => "public, 30m"),
@@ -34,18 +35,18 @@ class reg extends api
       );
     return $ret;
   }
-  
+
   private function GenCapcha()
   {
     return array("id" => rand(), "val" => "aaa");
   }
-  
+
   private function Capcha( $id, $value )
   {
     global $_SESSION;
     return $_SESSION['capcha'][$id] == $value;
   }
-  
+
   private function SafeEmail( $e )
   {
     $arr = explode("@", $e);
@@ -53,7 +54,7 @@ class reg extends api
       throw new phoxy_protected_call_error(array("error" => "Unrecognized email"));
     $name = $arr[0];
     $domain = $arr[1];
-    
+
     $ret = $name[0];
     for ($i = 1; $i < strlen($name); $i++)
       $ret .= "*";
@@ -66,10 +67,10 @@ class reg extends api
 
   private function SendInvite( $mail, $url )
   {
-$headers   = array();
-$headers[] = "MIME-Version: 1.0";
-$headers[] = "Content-type: text/plain; charset=utf-8"; 
-$headers[] = "From: regbot@indbtc.com";
+    $headers   = array();
+    $headers[] = "MIME-Version: 1.0";
+    $headers[] = "Content-type: text/plain; charset=utf-8";
+    $headers[] = "From: regbot@indbtc.com";
     mail($mail, "Independence limited confirm", "
 Здравствуйте,
 
@@ -82,15 +83,15 @@ $headers[] = "From: regbot@indbtc.com";
 С уважением,
 
 команда Independece
------------------------------ 
+-----------------------------
 ".(phoxy_conf()['site']), implode("\r\n", $headers));
   }
-  
+
   protected function Request( )
   {
     if (strlen($_POST['phone']) < 5)
       return array("error" => "Крайне важно указать настоящий телефон. Серьезно.");
-    $login = LoadModule('api', 'login');      
+    $login = LoadModule('api', 'login');
     if (!isset($_POST['age']) && $_POST['age'] != 'checked')
       return array("error" => "Вы должны быть старше 18 лет");
     $code = md5(rand());
@@ -103,8 +104,9 @@ $headers[] = "From: regbot@indbtc.com";
       $_POST['phone']), true);
     if (!count($row))
       return array("error" => "Создать аккаунт не удалось. Попробуйте написать в обратную связь");
-      
+
     $id = $row['id'];
+
     global $_SESSION;
     $friend = null;
     if (isset($_SESSION['friend']))
@@ -121,12 +123,12 @@ $headers[] = "From: regbot@indbtc.com";
 
     if ($friend > 0)
       db::Query("UPDATE users.request SET friend=$2 WHERE id=$1", array($id, $friend));
-    
+
     $url = phoxy_conf()["site"]."#api/reg/email/html";
     $url .= "&id={$id}&code={$code}";
 
     $this->SendInvite($_POST['email'], $url);
-    
+
     return array(
       "design" => "reg/request",
       "data" => array(
@@ -138,7 +140,7 @@ $headers[] = "From: regbot@indbtc.com";
       "result" => "content"
       );
   }
-  
+
   protected function Email( )
   {
     $id = $_GET['id'];
@@ -150,12 +152,13 @@ $headers[] = "From: regbot@indbtc.com";
       return array("error" => "Record not found");
     if ($res['mail_verified'] == 't')
       return array("error" => "Mail already verified");
-    
+
     $rec = db::Query("SELECT count(*) FROM users.logins WHERE email = (SELECT email FROM users.request WHERE id = $1)",
-    array($id), true);
-    if ($rec['count'] == 0)
+      array($id), true);
+
+      if ($rec['count'] == 0)
     {
-      $uid_row = db::Query("SELECT * FROM users.add_user_by_code($1, $2)", 
+      $uid_row = db::Query("SELECT * FROM users.add_user_by_code($1, $2)",
           array($id, $code), 1);
       if (!count($uid_row))
         return array("error" => "Cant create user(already exsist?)");
@@ -167,7 +170,7 @@ $headers[] = "From: regbot@indbtc.com";
       return array("error" => "Already registered");
     $login = IncludeModule("api", "login");
     $login->DoLogin($uid);
-    
+
     return array(
       "design" => "reg/email",
       "data" => array("status" => "success"),

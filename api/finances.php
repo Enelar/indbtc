@@ -178,24 +178,30 @@ class finances extends api
     if (count($targets) != self::$count_bills)
       $targets = $this->QuestTargets($quest);
 
-    if (count($targets) != self::$count_bills)
-      return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");
+    phoxy_protected_assert(
+      count($targets) == self::$count_bills,
+      array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest"));
 
     $bitcoin = LoadModule('api', 'bitcoin');
     $wallet = LoadModule('api', 'wallet');
     $txid = $wallet->GetFirstSourceTxid($quest);
     $source = $bitcoin->GetSourceByTransaction($txid);
     $quest_info = $this->GetQuestInfo($quest);
-    if (!strlen($source))
-      return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
+    
+    phoxy_protected_assert(
+      strlen($source),
+      array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами."));
+    
     if (!count(db::Query("SELECT * FROM finances.accounts WHERE uid=$1", array($quest_info['uid']), true)))
       db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
         array($quest_info['uid'], $source));
 
     $wallet = LoadModule('api', 'wallet');
     $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);
-    if ($transaction == false)
-      return array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами.");
+
+    phoxy_protected_assert($transaction != false,
+      array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами."));
+
     $quest_info = $this->GetQuestInfo($quest);
 
     db::Query("UPDATE finances.quests SET tx=$2, tx_snap=now() WHERE id=$1", array($quest, $transaction));

@@ -45,15 +45,15 @@ class matrix extends api
     global $_SESSION;
 
     $login = LoadModule('api', 'login');
-    if ($login->IsLogined())
-      if (!$force)
-        return array(
+    if (!$force)
+      phoxy_protected_assert(!$login->IsLogined(),
+      array(
           "script" => array("login"),
           "routeline" => "InviteDelogin",
           "data" => array("url" => "api/matrix/invite?node={$node}&hash={$hash}&force=1")
-          );
-      else
-        $login->DoLogout();
+          ));
+    else if ($login->IsLogined())
+      $login->DoLogout();
 
     if ($hash != $this->NodeHash($node))
     {
@@ -74,8 +74,8 @@ class matrix extends api
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT id FROM matrix.nodes WHERE uid=$1 ORDER BY id DESC LIMIT 1", array($login->UID()), true);
-    if (!count($row))
-      throw new phoxy_protected_call_error(array("error" => "Для доступа к статистике зарегистрируйтесь в одном из циклов!"));
+    phoxy_protected_assert(count($row),
+      array("error" => "Для доступа к статистике зарегистрируйтесь в одном из циклов!"));
     return $this->MakeInvite($row['id']);
   }
 
@@ -93,7 +93,7 @@ class matrix extends api
     if (!count($res))
     {
       $_SESSION['friend'] = null;
-      return array("reset" => true);
+      throw new phoxy_protected_call_error(array("reset" => true));
     }
     $right_hash = md5(serialize($res));
     return $right_hash;
@@ -206,16 +206,16 @@ class matrix extends api
     $quest = $qid;
     $wallet = LoadModule('api', 'wallet');
     $input_wallet = $wallet->GetInputQuestWallet($quest);
-    if ($input_wallet == false)
-      return array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us.");
+    phoxy_protected_assert($input_wallet != false,
+      array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us."));
 
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
 
     $tax = finances::$tax;
     $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
-    if ($amount <= $tax)
-      return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
+    phoxy_protected_assert($amount > $tax,
+      array("error" => "Проблема с выпиской счета. Обратитесь к нам."));
     return array
     (
       "data" =>

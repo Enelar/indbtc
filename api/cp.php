@@ -29,17 +29,6 @@ class cp extends api
     return $ret;
   }
 
-  protected function InviteLink( $node )
-  {
-    deprecated();
-    $matrix = LoadModule('api', 'matrix');
-    $url = $matrix->MakeInvite($node);
-    return array
-    (
-      "data" => array("invite" => $url)
-    );
-  }
-
   protected function CommitQuest( $qid )
   {
     $finances = LoadModule('api', 'finances');

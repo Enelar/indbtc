@@ -24,35 +24,6 @@ class matrix extends api
     return false;
   }
 
-  private function AddToTop( $uid, $level )
-  {
-    $nid = $this->AddChild($uid, null, $level);
-
-    if ($nid === null)
-      return false;
-    return $nid;
-  }
-
-  public function DeleteMatrix( $nid )
-  {
-    deprecated();
-    db::Query("DELETE FROM matrix.nodes WHERE id=$1", array($nid));
-  }
-
-  public function GetChilds( $node )
-  {
-    $ret = array();
-    $res = db::Query("SELECT *, min(childs) as child1, max(childs) as child2 FROM matrix.nodes WHERE id = $1 ORDER BY id", array($node));
-    foreach ($res as $row)
-      array_push($ret, $row['id']);
-    foreach ($res as $row)
-    {
-      array_push($ret, $row['child1']);
-      array_push($ret, $row['child2']);
-    }
-    return $ret;
-  }
-
   public function GetGrandParent( $nid )
   {
     $res = db::Query("SELECT matrix.get_parents($1, 2) as tid OFFSET 1", array($nid), true);
@@ -262,4 +233,22 @@ class matrix extends api
       "result" => "matrix_{$quest_info['level']}"
     );
   }
+  
+  /***
+   * Unused
+   ***/
+  
+  private function GetChilds( $node )
+  {
+    $ret = array();
+    $res = db::Query("SELECT *, min(childs) as child1, max(childs) as child2 FROM matrix.nodes WHERE id = $1 ORDER BY id", array($node));
+    foreach ($res as $row)
+      array_push($ret, $row['id']);
+    foreach ($res as $row)
+    {
+      array_push($ret, $row['child1']);
+      array_push($ret, $row['child2']);
+    }
+    return $ret;
+  }  
 }

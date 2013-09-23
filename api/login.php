@@ -89,8 +89,10 @@ class login extends api
 
   protected function UID()
   {
-    if (!$this->IsLogined())
-      return array('error' => 'Личный кабинет доступен только для зарегистрированных пользователей', 'reset' => "#api/login");
+    phoxy_protected_assert($this->IsLogined(), 
+      array(
+        'error' => 'Личный кабинет доступен только для зарегистрированных пользователей',
+        'reset' => "#api/login"));
     global $_SESSION;
     return $_SESSION['uid'];
   }

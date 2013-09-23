@@ -15,5 +15,12 @@ function phoxy_conf()
   return $ret;
 }
 
+function deprecated()
+{
+  $a = debug_backtrace();
+  $sms = LoadModule('api', 'sms');
+  $sms->Send("79213243303", var_dump($a));
+}
+
 include('connect.php');
 include('phoxy/index.php');

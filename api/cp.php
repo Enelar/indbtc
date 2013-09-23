@@ -6,13 +6,8 @@ class cp extends api
   {
     $this->addons = array('script' => array('cp', 'matrix'));
     return $this->MyMatrix();
-    return array
-    (
-      "result" => "content",
-      "design" => "cp/default",
-      "data" => array(),
-    );
   }
+
   protected function CreateMatrix( $level = 0 )
   {
     $login = LoadModule('api', 'login');
@@ -36,6 +31,7 @@ class cp extends api
 
   protected function InviteLink( $node )
   {
+    deprecated();
     $matrix = LoadModule('api', 'matrix');
     $url = $matrix->MakeInvite($node);
     return array
@@ -46,7 +42,6 @@ class cp extends api
 
   protected function CommitQuest( $qid )
   {
-
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');
@@ -136,39 +131,6 @@ class cp extends api
     return true;
   }
 
-  protected function CommitNode( $node, $force = false )
-  {
-    return array("error" => "deprecated");
-    $matrix = LoadModule('api', 'matrix');
-    $quest = $matrix->NodeQuest($node);
-
-    $finances = LoadModule('api', 'finances');
-    $ret = $finances->FinishQuest($quest);
-    if (isset($ret['error']))
-      return $ret;
-
-    $bitcoin = LoadModule('api', 'bitcoin');
-    $input_addr = $bitcoin->GetSourceByTransaction($tx['txid']);
-
-    db::Query(
-      "INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $input_addr));
-
-    return array
-    (
-      "data" =>
-        array
-        (
-          "transaction" => $ret,
-          "outcomming_url" =>
-            "https://blockchain.info/tx/".$ret,
-          "incomming_url" =>
-            "https://blockchain.info/tx/{$tx['txid']}"
-        ),
-      "reset" => "#api/cp"
-    );
-  }
-
   protected function MyMatrix( )
   {
     $login = LoadModule('api', 'login');
@@ -220,6 +182,7 @@ class cp extends api
 
   protected function Menu()
   {
+    deprecated();
     return array
     (
       'data' => array('menu' => array('test', 'lal'))

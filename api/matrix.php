@@ -2,36 +2,6 @@
 
 class matrix extends api
 {
-  public function AddChild( $uid, $parent, $level )
-  {
-    debug_print_backtrace();
-    echo "depricated";
-    exit();
-    if ($parent != null && !$this->IsCompleted($parent))
-      return false;
-    db::Query("BEGIN;");
-
-    $row = db::Query("INSERT INTO matrix.nodes(uid, parent, ip, level) VALUES($1, $2, $3, $4) RETURNING id",
-      array($uid, $parent, _ip_, $level), 1);
-
-      if (!count($row))
-      return false;
-    $node = $row['id'];
-
-    if ($node == NULL)
-      return false;
-    $finances = LoadModule("api", "finances");
-    $quest = $finances->MakeQuest($node, $level);
-
-    if ($quest === false)
-    {
-      db::Query("ROLLBACK;");
-      return false;
-    }
-    db::Query("COMMIT;");
-    return $node;
-  }
-
   public function AddToFriend( $uid, $level )
   {
     if (!defined("_ip_"))
@@ -65,6 +35,7 @@ class matrix extends api
 
   public function DeleteMatrix( $nid )
   {
+    deprecated();
     db::Query("DELETE FROM matrix.nodes WHERE id=$1", array($nid));
   }
 
@@ -137,7 +108,7 @@ class matrix extends api
     return $this->MakeInvite($row['id']);
   }
 
-  public function MakeInvite( $node )
+  private function MakeInvite( $node )
   {
     $url = (phoxy_conf()['site']);
 
@@ -255,7 +226,7 @@ class matrix extends api
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
-    array($login->UID(), $level), true);
+      array($login->UID(), $level), true);
     return $this->ShowMatrixCreate($row['id']);
   }
 

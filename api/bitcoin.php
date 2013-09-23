@@ -119,7 +119,7 @@ class bitcoin extends api
     $ret = db::Query(
       "UPDATE finances.sys_bills SET payed = payed + $2 WHERE id = $1 RETURNING id", array($invoice_id, $amount), true);
     $finances = IncludeModule("api", "finances");
-    $finances->CloseBill($ret['id']);
+    $finances->CloseBill($ret['id']); // deprecated code
     */
     db::Query(
       "INSERT INTO finances.accounts(uid, wallet) VALUES ((SELECT uid FROM finances.quests WHERE id=$1), $2)",

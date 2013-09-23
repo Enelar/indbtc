@@ -139,41 +139,6 @@ class finances extends api
     return $row['count'] == self::$count_bills;
   }
 
-  protected function OpenNextBill( $quest )
-  {
-    $row = db::Query("SELECT * FROM finances.active_bills WHERE quest=$1 ORDER BY id ASC LIMIT 1", array($quest), true);
-    if (!$row)
-      return array("error" => "Quest looks like completed");
-    if ($row['wallet'] != '')
-      return array("error" => "Waiting for purshase");
-
-    $wallet = $this->OpenBill($row['id']);
-    return array("data" => array("destination" => $wallet) );
-  }
-
-  protected function IsCompletedBill( $bill )
-  {
-    $row = db::Query("SELECT completed FROM finances.bills WHERE id=$1", array($bill), true);
-    return $row['completed'] == 't';
-  }
-
-  protected function IsCompletedQuest( $quest )
-  {
-    $row = db::Query("SELECT completed FROM finances.quest_status WHERE id=$1", array($quest), true);
-    return $row['completed'] == 't';
-  }
-
-  public function CloseBill( $bill )
-  {
-    if (!$this->IsCompletedBill($bill))
-      return;
-    $row = db::Query("SELECT quest FROM finances.bills WHERE id=$1", array($bill), true);
-    if (!$this->IsCompletedQuest($row['quest']))
-      return;
-
-    return $row['uid'];
-  }
-
   public function OpenAllBills( $quest )
   {
     $ret = array();
@@ -204,6 +169,7 @@ class finances extends api
     }
     return $ret;
   }
+
   protected function FinishQuest( $quest )
   {
     $targets = $this->QuestTargets($quest);

@@ -6,7 +6,6 @@ class login extends api
   {
     $this->addons = array
     (
-      //"headers" => array("cache" => "public, 30m"),
       "script" => array("login"),
       "result" => "login_place",
     );

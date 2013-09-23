@@ -15,10 +15,8 @@ class robot extends api
   {
   global $_SERVER;
     $login = LoadModule('api', 'login');
-    //if ($login->UID() == 2)
-      //
-	if (_ip_ == '213.21.7.6')
-	  $login->DoLogin($uid);
+    if (_ip_ == '213.21.7.6')
+      $login->DoLogin($uid);
   }
   /* should ignore empty wallets! */
   protected function FixAddress()

@@ -65,7 +65,7 @@ class sms extends api
       "type" => "json",
 	  "senderid" => "indbtc.com"
     );
-    //var_dump($this->BuildSignature($a));
+
     $res = http_post_request("http://api.comtube.ru/scripts/api/sms.php", $this->BuildSignature($a));
     $obj = json_decode($res, true);
     return $obj['code'] == 200;
@@ -84,7 +84,6 @@ class sms extends api
 
     $signature = md5($url . "&password=".urlencode(self::$pass));
     $params['signature'] = $signature;
-  //  $url .= "signature=" . $signature;
 
     return $params;
   }  

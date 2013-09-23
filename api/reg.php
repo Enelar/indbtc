@@ -8,8 +8,6 @@ class reg extends api
       "email" => "text",
       "pass" => "password",
       "repass" => "password",
-      //"capcha" => "hidden",
-      //"capcha_id" => "hidden",
       "phone" => "text",
       );
     $capcha = $this->GenCapcha();
@@ -90,13 +88,6 @@ $headers[] = "From: regbot@indbtc.com";
   
   protected function Request( )
   {
-    /*
-    $id = $_POST['capcha_id'];
-    $value = $_POST['capcha'];
-    if (!$this->Capcha($id, $value))
-      return array("error" => "Capcha not match");
-      */
-    
     if (strlen($_POST['phone']) < 5)
       return array("error" => "Крайне важно указать настоящий телефон. Серьезно.");
     $login = LoadModule('api', 'login');      

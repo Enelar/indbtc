@@ -5,19 +5,7 @@ class finances extends api
   public static $tax = 0.0005;
   private static $line_price = 0.001; // deprecated
   private static $count_bills = 6;
-  /*
-  private static $levels = array
-  (
-    0.0051,
-    0.0052,
-    0.0053,
-    0.0054,
-    0.0055,
-    0.0056,
-    0.0057,
-    0.0058,
-  );
-  /**/
+
   private static $levels = array
   (
     0.5,
@@ -29,19 +17,7 @@ class finances extends api
     32,
     0.05
   );
-/*  
-  private static $levels = array
-  (
-    0.5,
-    1.5,
-    4.5,
-    13.5,
-    40.5,
-    121.5,
-    364.5,
-    1093.5
-  );
-  */
+
   public function MakeQuest( $node = null, $level = 0 )
   {
     $matrix = IncludeModule('api', 'matrix');
@@ -119,11 +95,9 @@ class finances extends api
 
     $bitcoin = IncludeModule("api", "bitcoin");
     $user_wallet = $this->WalletByUID($bill['tid']);
-    //db::Query("SELECT wallet FROM finances.accounts WHERE uid=$1", array($bill['tid']), true)['wallet'];
-    //$this->WalletByNode($bill['tid']);
-    //var_dump($user_wallet);
+
     assert(strlen($user_wallet), $user_wallet." bid $bid");
-    //$wallet = $bitcoin->CreateWithoutCallback($user_wallet, $bill['amount'] - $bill['payed'], $bill['id']);
+
     $wallet = $bitcoin->CreateUnsafe($user_wallet, $bill['amount'] - $bill['payed'], $bill['id']);
     assert($wallet != false);
     return $wallet;
@@ -134,18 +108,8 @@ class finances extends api
     if ($uid === null)
     {
       $bitcoin = IncludeModule('api', 'bitcoin');
-     // return $bitcoin->ProtectWithoutCallback(
       return
         "13BXUDTQdrXMhmYg8LbiqDuD3VNGs8Lp53"; // system 19 september 2013
-      //"1AZkiSpRRv73677RN5srrGD5DpuQSzWCcG"; // system 10 august 2013
-      //"19FYJUu8n5MGP3HvJU7An2s965q2rapGPM"; // system release
-      //"1Fn7z8oJsE1NugRFFziMhFZiGVSG6ckwu6" // final test
-      //"16vvjXXYJ2NJFqQ7NkWbtCbfDSHF5SRNiM" // costya test
-      //"17swAabJfd1AvruXrNJVsFHgGkvLiKjVuW" // final test?
-      //"1KvnKddrHLDL4QTwS6NUu7X4tPwAsDpFa9" // система3
-      //return "18MTuaXhK4KhyhWzaXgP8ERZHoU35tTUcK"; // система2
-      //return "1Fn7z8oJsE1NugRFFziMhFZiGVSG6ckwu6"; // система1
-      //);
     }
     $row = db::Query("SELECT wallet FROM finances.accounts WHERE uid = $1", array($uid), true);
     assert(isset($row['wallet']));
@@ -204,10 +168,8 @@ class finances extends api
     $row = db::Query("SELECT quest FROM finances.bills WHERE id=$1", array($bill), true);
     if (!$this->IsCompletedQuest($row['quest']))
       return;
-  
-    //$matrix = IncludeModule('api', 'matrix');
-    // 
-    return $row['uid'];
+
+      return $row['uid'];
   }
 
   public function OpenAllBills( $quest )
@@ -219,11 +181,7 @@ class finances extends api
     {
       $wallet = $this->OpenBill($bill['id']);
       assert(!isset($ret[$wallet]));
-      /* deprecated..
-      if (!isset($bitcoin))
-        $bitcoin = LoadModule('api', 'bitcoin');
-      $wallet = $bitcoin->SystemHide($wallet, $bill['id']);
-      */
+
       array_push($ret, array('wallet' => $wallet, 'amount' => $bill['amount'] - $bill['payed']));
     }
     return $ret;
@@ -255,9 +213,6 @@ class finances extends api
     if (count($targets) != self::$count_bills)
       return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");    
 
-    //$sms = LoadModule('api', 'sms');
-    //$sms->Send("79213243303", "$quest trapped");
-    //return array("error" => "Тестирование устойчивости системы");
     $bitcoin = LoadModule('api', 'bitcoin');
     $wallet = LoadModule('api', 'wallet');
     $txid = $wallet->GetFirstSourceTxid($quest);
@@ -274,9 +229,7 @@ class finances extends api
     if ($transaction == false)
       return array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами.");
     $quest_info = $this->GetQuestInfo($quest);
-    //var_dump($quest);
-    //var_dump($transaction);  
-    //var_dump($quest_info);    
+
     db::Query("UPDATE finances.quests SET tx=$2, tx_snap=now() WHERE id=$1", array($quest, $transaction));        
     $matrix = LoadModule('api', 'matrix');
     $matrix->CommitNode($quest_info['nid']);    

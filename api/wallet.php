@@ -69,7 +69,6 @@ class wallet extends api
 
   public function FinishQuest( $quest, $targets )
   {
-    //var_dump($targets);
     try
     {
       return $this->rpc->sendmany("quest_{$quest}", $targets);
@@ -81,7 +80,6 @@ class wallet extends api
   
   public function FinishQuestWithDoubles( $quest, $targets )
   {
-    //var_dump($targets);
     $a = array();
     foreach ($targets as $t)
       if (!isset($a[$t['wallet']]))
@@ -168,7 +166,5 @@ class wallet extends api
 
   protected function Reserve()
   {
-    return $this->Move();
-    //$this->rpc->getaccount('1H1TfZJNgQYpor741BuTGJMvpACLWhx16E');
   }
 }

@@ -58,17 +58,7 @@ class cp extends api
     $tx = $wallet->GetIncomingTxInfo($qid);
     if ($res !== true)
       return $res;
-    /*
-    $sms = LoadModule('api', 'sms');
-    if (_ip_ != '213.21.7.6')
-    {
-      $sms->SendUID($login->UID(), "Приносим извинения за предоставленные неудоства. Подтверждение циклов времено недоступно");
-      $sms->Send("9213243303", $login->UID());
-      return array("error" => "Мы испытываем трудности в этом модуле, в связи с DDOS атакой(в ночь с 18.09.13 на 19.09.13) на необходимый нам сервис http://blockchain.info.
-В следствие чего, сервис продолжает быть недоступным для роботов. Работа системы восстанавливается.");      
-    }
-    */
-      
+
     $transaction = db::Begin();
 
     if (!$finances->CheckQuest($qid))

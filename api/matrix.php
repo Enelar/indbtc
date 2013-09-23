@@ -13,17 +13,16 @@ class matrix extends api
 
     $row = db::Query("INSERT INTO matrix.nodes(uid, parent, ip, level) VALUES($1, $2, $3, $4) RETURNING id",
       array($uid, $parent, _ip_, $level), 1);
-//    var_dump($row);
-    if (!count($row))
+
+      if (!count($row))
       return false;
     $node = $row['id'];
-//    var_dump($row);
+
     if ($node == NULL)
       return false;
     $finances = LoadModule("api", "finances");
     $quest = $finances->MakeQuest($node, $level);
 
-//    var_dump($quest);
     if ($quest === false)
     {
       db::Query("ROLLBACK;");
@@ -39,9 +38,9 @@ class matrix extends api
       return array("error" => "IP undefined");
           
     $row = db::Query("SELECT matrix.add_to_system($1, $2, $3)", array($uid, $level, _ip_), true);
-    //var_dump($row);
+
     assert(count($row));
-    //var_dump($row);
+
     return $row['add_to_system'];
 
     
@@ -58,7 +57,7 @@ class matrix extends api
   private function AddToTop( $uid, $level )
   {
     $nid = $this->AddChild($uid, null, $level);
-//    var_dump($nid);
+
     if ($nid === null)
       return false;
     return $nid;
@@ -114,7 +113,6 @@ class matrix extends api
       else
         $login->DoLogout();
 
-    //$right_hash = md5(serialize($res));
     if ($hash != $this->NodeHash($node))
     {
       $res = db::Query("SELECT id, uid, parent, ip, snap FROM matrix.nodes WHERE id=$1", array($node), true);
@@ -126,11 +124,7 @@ class matrix extends api
 
     $res = $this->GetNode($node);
     $_SESSION['friend'] = $res['uid'];
-/* outdated
-    $childs = db::Query("SELECT matrix.count_childs(childs) FROM matrix.nodes WHERE id=$1", array($node), true);
-    if ($childs['count_childs'] == 2)
-      return array("error" => "Matrix already full. No place to next child.");
-      */
+
     return array("reset" => "#api/reg");
   }
 
@@ -145,7 +139,7 @@ class matrix extends api
 
   public function MakeInvite( $node )
   {
-    $url = (phoxy_conf()['site']); //.'#'.(phoxy_conf()["get_api_param"]).'/matrix/Invite';
+    $url = (phoxy_conf()['site']);
 
     $hash = $this->NodeHash($node);
     return "{$url}invite/{$node}/{$hash}";
@@ -272,8 +266,7 @@ class matrix extends api
     $input_wallet = $wallet->GetInputQuestWallet($quest);
     if ($input_wallet == false)
       return array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us.");
-    //$bitcoin = LoadModule('api', 'bitcoin');
-    //$protected = $bitcoin->ProtectWithCallback($input_wallet);
+
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
   

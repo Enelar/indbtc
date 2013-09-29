@@ -65,8 +65,7 @@ class login extends api
     $email = $_POST['email'];
     $pass = $this->PasswordHash($_POST['pass']);
     $ret = db::Query("SELECT id FROM users.logins WHERE email=$1 AND pass=$2", array(strtolower($email), $pass), true);
-    if (!count($ret))
-     return array("error" => "Login failed");
+    phoxy_protected_assert(count($ret), array("error" => "Login failed"));
     $this->DoLogin($ret['id']);
     return array('reset' => phoxy_conf()["site"]."#api/cp");
   }
@@ -91,7 +90,7 @@ class login extends api
   {
     phoxy_protected_assert($this->IsLogined(), 
       array(
-        'error' => 'Личный кабинет доступен только для зарегистрированных пользователей',
+        'error' => 'Данное действие требует авторизации',
         'reset' => "#api/login"));
     global $_SESSION;
     return $_SESSION['uid'];
@@ -111,22 +110,18 @@ class login extends api
 
   public function ChangePassword( $old, $new )
   {
-    if (!$this->IsLogined())
-      return array("error" => "You are not logined", "reset" => "/");
     $old = $this->PasswordHash($old);
     $new = $this->PasswordHash($new);
     $ret = db::Query("UPDATE users.logins SET pass=$3 WHERE id=$1 AND pass=$2 RETURNING id", 
       array($this->UID(), $old, $new), true);
 
-    if ($ret['id'] != $this->UID())
-      return array("error" => "Some error, please retry");
+    phoxy_protected_assert($ret['id'] == $this->UID(), array("error" => "Some error, please retry"));
     return array("error" => "Пароль успешно изменен");
   }
 
   protected function ResetPassword( $email )
   {
-    if (!$this->UID() == 2)
-      return array("error" => 'You not admin');
+    phoxy_protected_assert($this->UID() == 2, array("error" => 'You not admin'));
     do
     {
       $origin = base64_encode(md5(time() + microtime(), true));
@@ -136,8 +131,7 @@ class login extends api
     $hash = $this->PasswordHash($pass);
     $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING id", array($email, $hash), true);
 
-    if (!isset($ret['id']))
-      return array("error" => "User not found");
+    phoxy_protected_assert(isset($ret['id']), array("error" => "User not found"));
     $sms = LoadModule('api', 'sms');
     $sms->SendUID($ret['id'], "По вашей просьбе был произведен сброс пароля: $pass");
     $headers   = array();

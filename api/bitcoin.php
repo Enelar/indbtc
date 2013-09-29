@@ -30,12 +30,9 @@ class bitcoin extends api
     $res = http_request($url);
     if ($res == "Error Invalid Destination Bitcoin Address")
       return false;
-    if (strpos($res, "Error") !== false)
-    {
-      echo json_encode(array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
-      exit();
-      return false;
-    }
+    phoxy_protected_assert(
+      strpos($res, "Error") === false,
+      array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
     $obj = json_decode($res, true);
     $input = $obj['input_address'];
     return $input;

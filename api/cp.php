@@ -58,8 +58,8 @@ class cp extends api
     }
 
     $res = $finances->FinishQuest($qid);
-    $sms = LoadModule('api', 'sms');
-    $sms->Send("79213243303", "commit: ".json_encode($res));
+    //$sms = LoadModule('api', 'sms');
+    //$sms->Send("79213243303", "commit: ".json_encode($res));
     if ($res == false  || isset($res['error']))
     {
       $transaction->Rollback();
@@ -68,6 +68,15 @@ class cp extends api
 
     db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
     $transaction->Commit();
+    
+    $pid = $matrix->GetGrandParent($tid);
+    if ($matrix->IsCompleted($pid))
+    {
+      $user = db::Query("SELECT uid, level FROM matrix.nodes WHERE id=$1",
+        array($pid), true);
+      $price = $finances->LevelTotalPrice($user['level']);
+      $sms->SendUID($user['uid'], "Сделайте реинвест на цикле {$price} btc.");
+    }
     return array
     (
       "data" =>

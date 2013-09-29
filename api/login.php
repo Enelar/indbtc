@@ -132,7 +132,7 @@ class login extends api
       $origin = base64_encode(md5(time() + microtime(), true));
     } while (strrchr($origin, '/'));
 
-    $pass = substr($origin, 0, -1);
+    $pass = substr($origin, 0, 8);
     $hash = $this->PasswordHash($pass);
     $ret = db::Query("UPDATE users.logins SET pass=$2 WHERE email=$1 RETURNING id", array($email, $hash), true);
 

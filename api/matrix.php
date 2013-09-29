@@ -37,7 +37,7 @@ class matrix extends api
     $res = db::Query("SELECT * FROM matrix.is_completed($1, $2)", array($node, $depth), true);
     if (!count($res))
       return false;
-    return $res['is_completed'];
+    return $res['is_completed'] === 't';
   }
 
   protected function Invite( $node, $hash, $force = false )

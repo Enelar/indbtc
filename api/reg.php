@@ -90,7 +90,7 @@ class reg extends api
   {
     phoxy_protected_assert(strlen($_POST['phone']) > 5, array("error" => "Крайне важно указать настоящий телефон. Серьезно."));
     $login = LoadModule('api', 'login');
-    phoxy_protected_assert(isset($_POST['age']) && $_POST['age'] == 'checked', array("error" => "Вы должны быть старше 18 лет"));
+    phoxy_protected_assert(isset($_POST['age']) && ($_POST['age'] == 'checked' || $_POST['age'] == 'on'), array("error" => "Вы должны быть старше 18 лет"));
     $code = md5(rand());
 
     $row = db::Query("INSERT INTO users.request(email, pass, ip, code, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
@@ -171,4 +171,26 @@ class reg extends api
       "reset" => "#api/cp"
         );
   }
+
+  private function SendHello( $mail, $url )
+  {
+    $headers   = array();
+    $headers[] = "MIME-Version: 1.0";
+    $headers[] = "Content-type: text/plain; charset=utf-8";
+    $headers[] = "From: regbot@indbtc.com";
+    mail($mail, "Independence limited hello", "
+Здравствуйте,
+
+Благодарим вас за регистрацию учётной записи Independence. Чтобы активировать учётную запись, перейдите по следующей ссылке.
+
+{$url}
+
+Если щелчок на ссылке не работает, скопируйте ссылку в окно вашего браузера или введите непосредственно с клавиатуры.
+
+С уважением,
+
+команда Independece
+-----------------------------
+".(phoxy_conf()['site']), implode("\r\n", $headers));
+  }  
 }

@@ -54,6 +54,31 @@ $$
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION users.is_child_of( _uid int8, _parent int8 ) RETURNS int2 AS
+$$
+  DECLARE
+    _parents int8[];
+    _i int2;
+  BEGIN
+    SELECT INTO _parents ARRAY(SELECT users.get_line_parents(_uid));
+    FOR _i IN 1..5
+    LOOP
+     IF _parents[_i] = _parent
+     THEN
+       RETURN _i;
+     END IF;
+    END LOOP;
+    
+    IF _uid = _parent
+    THEN
+      RETURN 0;
+    END IF;
+    
+    RETURN NULL;
+  END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION users.get_line_count( _base_uid int8, _level int4 ) RETURNS SETOF int4 AS
 $$
   DECLARE

@@ -230,11 +230,24 @@ $$
 --      _nid = NULL;
 --      RAISE NOTICE 'Friend is null! Inviter not found %', _uid;
 --    END IF;
-    _nid = matrix.search_refer_place(_uid, _level, int2(5));
+    
+    _nid = matrix.debug_refer_place_exception(_uid, _level);
+    IF _nid IS NULL
+    THEN
+      _nid = matrix.search_refer_place(_uid, _level, int2(5));    
+    END IF;
 
     INSERT INTO matrix.nodes(uid, parent, ip, level) VALUES (_uid, _nid, _ip, _level) RETURNING INTO _ret id;
 
     RETURN _ret;
+  END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION matrix.debug_refer_place_exception( _uid int8, _level int2 ) RETURNS int8 AS
+$$
+  BEGIN
+    RETURN NULL;
   END;
 $$
 LANGUAGE plpgsql;

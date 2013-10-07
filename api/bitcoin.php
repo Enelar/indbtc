@@ -16,30 +16,23 @@ class bitcoin extends api
     $callback = $this->GenCallback($qid)['data'];
     $url = "https://blockchain.info/api/receive?method=create&shared=true&address={$wallet}&callback="
       . urlencode($callback);
-
-    $res = http_request($url);
-
-    if ($res == "Error Invalid Destination Bitcoin Address")
-      return false;
-    if (strpos($res, "Error") !== false)
-      return false;
-    $obj = json_decode($res, true);
-    $input = $obj['input_address'];
-    return $input;
+    return $this->BlockchainAsk($url);
   }
 
   public function ProtectWithoutCallback( $wallet )
   {
     $url = "https://blockchain.info/api/receive?method=create&shared=true&address={$wallet}";
+    return $this->BlockchainAsk($url);
+  }
+  
+  private function BlockchainAsk( $url )
+  {
     $res = http_request($url);
     if ($res == "Error Invalid Destination Bitcoin Address")
       return false;
-    if (strpos($res, "Error") !== false)
-    {
-      echo json_encode(array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
-      exit();
-      return false;
-    }
+    phoxy_protected_assert(
+      strpos($res, "Error") === false,
+      array("error" => "Blockchain returns: $res", "data" => debug_backtrace()));
     $obj = json_decode($res, true);
     $input = $obj['input_address'];
     return $input;
@@ -48,7 +41,7 @@ class bitcoin extends api
   public function SystemHide( $wallet, $bill_id )
   {
     $input = $this->ProtectWithoutCallback($wallet);
-    db::Query("UPDATE finances.sys_bills SET wallet=$2 WHERE id=$1", array($bill_id, $input));
+    $this->CreateUnsafe($input, 0, $bill_id);
     return $input;
   }
 
@@ -123,7 +116,7 @@ class bitcoin extends api
     $ret = db::Query(
       "UPDATE finances.sys_bills SET payed = payed + $2 WHERE id = $1 RETURNING id", array($invoice_id, $amount), true);
     $finances = IncludeModule("api", "finances");
-    $finances->CloseBill($ret['id']);
+    $finances->CloseBill($ret['id']); // deprecated code
     */
     db::Query(
       "INSERT INTO finances.accounts(uid, wallet) VALUES ((SELECT uid FROM finances.quests WHERE id=$1), $2)",

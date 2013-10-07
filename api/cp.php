@@ -6,52 +6,32 @@ class cp extends api
   {
     $this->addons = array('script' => array('cp', 'matrix'));
     return $this->MyMatrix();
-    return array
-    (
-      "result" => "content",
-      "design" => "cp/default",
-      "data" => array(),
-    );
   }
+
   protected function CreateMatrix( $level = 0 )
   {
     $login = LoadModule('api', 'login');
-    if (!$login->IsLogined())
-      return array("error" => "Login required");
+    phoxy_protected_assert($login->IsLogined(), array("error" => "Login required"));
 
     $m = LoadModule('api', 'matrix');
-    if ($m->LevelsStatus()[$level] != false)
-      return array("reset" => "#api/cp");
+    phoxy_protected_assert($m->LevelsStatus()[$level] == false, array("reset" => "#api/cp"));
 
     $finances = LoadModule('api', 'finances');
     $qid = $finances->MakeQuest(null, $level);
 
-    if ($qid == false)
-      return array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами.");
+    phoxy_protected_assert($qid != false, array("error" => "Не удалось создать цикл. Это очень странно. Свяжитесь с нами."));
 
     $matrix = LoadModule('api', 'matrix', true);
     $ret = $matrix->ShowMatrixCreate($qid);
     return $ret;
   }
 
-  protected function InviteLink( $node )
-  {
-    $matrix = LoadModule('api', 'matrix');
-    $url = $matrix->MakeInvite($node);
-    return array
-    (
-      "data" => array("invite" => $url)
-    );
-  }
-
   protected function CommitQuest( $qid )
   {
-
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($qid);
     $login = LoadModule('api', 'login');
-    if ($quest_info['uid'] != $login->UID())
-      return array("error" => "Its not your quest");
+    phoxy_protected_assert($quest_info['uid'] == $login->UID(), array("error" => "Its not your quest"));
 
     $wallet = LoadModule('api', 'wallet');
     $res = $this->MoneyEnough($qid);
@@ -66,16 +46,18 @@ class cp extends api
       $matrix = LoadModule('api', 'matrix');
       $nid = $matrix->AddToFriend($login->UID(), $quest_info['level']);
       db::Query("UPDATE finances.quests SET nid=$2 WHERE id=$1 RETURNING id", array($qid, $nid), true);
-      if ($finances->GetQuestInfo($qid)['nid'] != $nid)
-        return array("error" => "Ошибка вступления в матричную систему");
-      if (!$finances->MakeBills($qid))
-        return array("error" => "Не удалось создать адреса");
+      phoxy_protected_assert(
+        $finances->GetQuestInfo($qid)['nid'] == $nid,
+        array("error" => "Ошибка вступления в матричную систему"));
+      phoxy_protected_assert(
+        $finances->MakeBills($qid),
+        array("error" => "Не удалось создать адреса"));
       assert($finances->CheckQuest($qid));
     }
 
     $res = $finances->FinishQuest($qid);
-    $sms = LoadModule('api', 'sms');
-    $sms->Send("79213243303", "commit: ".json_encode($res));
+    //$sms = LoadModule('api', 'sms');
+    //$sms->Send("79213243303", "commit: ".json_encode($res));
     if ($res == false  || isset($res['error']))
     {
       $transaction->Rollback();
@@ -84,6 +66,15 @@ class cp extends api
 
     db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
     $transaction->Commit();
+    
+    $pid = $matrix->GetGrandParent($nid);
+    if ($matrix->IsCompleted($pid))
+    {
+      $user = db::Query("SELECT uid, level FROM matrix.nodes WHERE id=$1",
+        array($pid), true);
+      $price = $finances->LevelTotalPrice($user['level']);
+      $sms->SendUID($user['uid'], "Сделайте реинвест на цикле {$price} btc.");
+    }
     return array
     (
       "data" =>
@@ -104,69 +95,40 @@ class cp extends api
     $quest = $qid;
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
-    if ($quest_info['nid'] != null)
-      return array(
+    phoxy_protected_assert(
+      $quest_info['nid'] == null,
+      array(
       "data" => array("status" => "already", "message" => "Already completed"),
       "error" => "Цикл уже активирован, сейчас мы обновим страницу что бы вы это увидели",
-      "reset" => true);
+      "reset" => true));
 
     $wallet = LoadModule('api', 'wallet');
     $balance = $wallet->QuestBalance($quest);
 
     $need = $finances->LevelTotalPrice($quest_info['level']) - $balance;
-    if (!$wallet->GetTxCount($quest))
-      return array(
+    phoxy_protected_assert(
+      $wallet->GetTxCount($quest),
+      array(
         "error" => "Мы ждем оплаты. (сейчас произойдет переход на страницу кошелька)",
         "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest)
-        );
+        ));
 
     $sys_dest_addr = $wallet->GetFirstDestAddress($quest);
     $tx = $wallet->GetIncomingTxInfo($quest);
-    if (!$sys_dest_addr)
-      return array(
+    phoxy_protected_assert(
+      $sys_dest_addr,
+      array(
         "error" => "Мы ждем больше подтверждений платежа (Нужно 6, сейчас {$tx['confirmations']})",
-        "reset" => "https://blockchain.info/tx/{$tx['txid']}");
+        "reset" => "https://blockchain.info/tx/{$tx['txid']}"));
 
-    if ($need > 0)
-      return array(
+    phoxy_protected_assert(
+      $need <= 0,
+      array(
         "error" => "Недостаточно средств(положите еще {$need}).
 Требуется: {$target}, баланс: {$balance}.
 (Если вы выслали полную сумму, то рекомендуем подождать пол часа, деньги просто не дошли до нас)",
-        "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest));
+        "reset" => "https://blockchain.info/address/".$wallet->GetInputQuestWallet($quest)));
     return true;
-  }
-
-  protected function CommitNode( $node, $force = false )
-  {
-    return array("error" => "deprecated");
-    $matrix = LoadModule('api', 'matrix');
-    $quest = $matrix->NodeQuest($node);
-
-    $finances = LoadModule('api', 'finances');
-    $ret = $finances->FinishQuest($quest);
-    if (isset($ret['error']))
-      return $ret;
-
-    $bitcoin = LoadModule('api', 'bitcoin');
-    $input_addr = $bitcoin->GetSourceByTransaction($tx['txid']);
-
-    db::Query(
-      "INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
-      array($quest_info['uid'], $input_addr));
-
-    return array
-    (
-      "data" =>
-        array
-        (
-          "transaction" => $ret,
-          "outcomming_url" =>
-            "https://blockchain.info/tx/".$ret,
-          "incomming_url" =>
-            "https://blockchain.info/tx/{$tx['txid']}"
-        ),
-      "reset" => "#api/cp"
-    );
   }
 
   protected function MyMatrix( )
@@ -220,6 +182,7 @@ class cp extends api
 
   protected function Menu()
   {
+    deprecated();
     return array
     (
       'data' => array('menu' => array('test', 'lal'))

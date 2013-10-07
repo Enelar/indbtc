@@ -4,7 +4,7 @@ class finances extends api
 {
   public static $tax = 0.0005;
   private static $line_price = 0.001; // deprecated
-  private static $count_bills = 6;
+  private static $count_bills = 7;
 
   private static $levels = array
   (
@@ -42,13 +42,15 @@ class finances extends api
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
 
-    $matrix_price = self::$levels[$quest['level']];
-    $total_price = $matrix_price * 2;
-    $line_price = $total_price * 0.1;
+    $total_price = $this->LevelTotalPrice($quest['level']);
+    $matrix_price = $total_price * 0.49;
+    $line_price = $total_price * 0.09;
+    $commi_price = $total_price * 0.06;
 
     $this->Line($qid, $parents, $line_price);
     $matrix = LoadModule('api', 'matrix');
     $this->AddBill($qid, $matrix->NodeOwner($matrix->GetGrandParent($quest['nid'])), $matrix_price);
+    $this->AddBill($qid, null, $commi_price, null);
 
     if ($this->CheckQuest($qid))
     {
@@ -139,41 +141,6 @@ class finances extends api
     return $row['count'] == self::$count_bills;
   }
 
-  protected function OpenNextBill( $quest )
-  {
-    $row = db::Query("SELECT * FROM finances.active_bills WHERE quest=$1 ORDER BY id ASC LIMIT 1", array($quest), true);
-    if (!$row)
-      return array("error" => "Quest looks like completed");
-    if ($row['wallet'] != '')
-      return array("error" => "Waiting for purshase");
-
-    $wallet = $this->OpenBill($row['id']);
-    return array("data" => array("destination" => $wallet) );
-  }
-
-  protected function IsCompletedBill( $bill )
-  {
-    $row = db::Query("SELECT completed FROM finances.bills WHERE id=$1", array($bill), true);
-    return $row['completed'] == 't';
-  }
-
-  protected function IsCompletedQuest( $quest )
-  {
-    $row = db::Query("SELECT completed FROM finances.quest_status WHERE id=$1", array($quest), true);
-    return $row['completed'] == 't';
-  }
-
-  public function CloseBill( $bill )
-  {
-    if (!$this->IsCompletedBill($bill))
-      return;
-    $row = db::Query("SELECT quest FROM finances.bills WHERE id=$1", array($bill), true);
-    if (!$this->IsCompletedQuest($row['quest']))
-      return;
-
-    return $row['uid'];
-  }
-
   public function OpenAllBills( $quest )
   {
     $ret = array();
@@ -204,6 +171,7 @@ class finances extends api
     }
     return $ret;
   }
+
   protected function FinishQuest( $quest )
   {
     $targets = $this->QuestTargets($quest);
@@ -212,24 +180,30 @@ class finances extends api
     if (count($targets) != self::$count_bills)
       $targets = $this->QuestTargets($quest);
 
-    if (count($targets) != self::$count_bills)
-      return array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest");
+    phoxy_protected_assert(
+      count($targets) == self::$count_bills,
+      array("error" => "Что то пошло не так. Пожалуйста свяжитесь с нами. $quest"));
 
     $bitcoin = LoadModule('api', 'bitcoin');
     $wallet = LoadModule('api', 'wallet');
     $txid = $wallet->GetFirstSourceTxid($quest);
     $source = $bitcoin->GetSourceByTransaction($txid);
     $quest_info = $this->GetQuestInfo($quest);
-    if (!strlen($source))
-      return array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами.");
+    
+    phoxy_protected_assert(
+      strlen($source),
+      array("error" => "Выполнено все, кроме получения вашего адреса. Свяжитесь с нами."));
+    
     if (!count(db::Query("SELECT * FROM finances.accounts WHERE uid=$1", array($quest_info['uid']), true)))
       db::Query("INSERT INTO finances.accounts(uid, wallet) VALUES ($1, $2)",
         array($quest_info['uid'], $source));
 
     $wallet = LoadModule('api', 'wallet');
     $transaction = $wallet->FinishQuestWithDoubles($quest, $targets);
-    if ($transaction == false)
-      return array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами.");
+
+    phoxy_protected_assert($transaction != false,
+      array("error" => "Система вернула статус транзакции FALSE. Пожалуйста свяжитесь с нами."));
+
     $quest_info = $this->GetQuestInfo($quest);
 
     db::Query("UPDATE finances.quests SET tx=$2, tx_snap=now() WHERE id=$1", array($quest, $transaction));

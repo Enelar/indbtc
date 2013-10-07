@@ -50,8 +50,7 @@ class reg extends api
   private function SafeEmail( $e )
   {
     $arr = explode("@", $e);
-    if (count($arr) < 2 || strlen($arr[1]) < 4)
-      throw new phoxy_protected_call_error(array("error" => "Unrecognized email"));
+    phoxy_protected_assert(count($arr) == 2 && strlen($arr[1]) >= 4, array("error" => "Unrecognized email"));
     $name = $arr[0];
     $domain = $arr[1];
 
@@ -89,11 +88,9 @@ class reg extends api
 
   protected function Request( )
   {
-    if (strlen($_POST['phone']) < 5)
-      return array("error" => "Крайне важно указать настоящий телефон. Серьезно.");
+    phoxy_protected_assert(strlen($_POST['phone']) > 5, array("error" => "Крайне важно указать настоящий телефон. Серьезно."));
     $login = LoadModule('api', 'login');
-    if (!isset($_POST['age']) && $_POST['age'] != 'checked')
-      return array("error" => "Вы должны быть старше 18 лет");
+    phoxy_protected_assert(isset($_POST['age']) && ($_POST['age'] == 'checked' || $_POST['age'] == 'on'), array("error" => "Вы должны быть старше 18 лет"));
     $code = md5(rand());
 
     $row = db::Query("INSERT INTO users.request(email, pass, ip, code, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
@@ -102,8 +99,7 @@ class reg extends api
       phoxy_conf()["ip"],
       $code,
       $_POST['phone']), true);
-    if (!count($row))
-      return array("error" => "Создать аккаунт не удалось. Попробуйте написать в обратную связь");
+    phoxy_protected_assert(count($row), array("error" => "Создать аккаунт не удалось. Попробуйте написать в обратную связь"));
 
     $id = $row['id'];
 
@@ -148,15 +144,13 @@ class reg extends api
     $res = db::Query("SELECT * FROM users.request WHERE id = $1 AND code = $2", array($id, $code), 1);
 
     $this->addons['hash'] = '';
-    if (!count($res))
-      return array("error" => "Record not found");
-    if ($res['mail_verified'] == 't')
-      return array("error" => "Mail already verified");
+    phoxy_protected_assert(count($res), array("error" => "Record not found"));
+    phoxy_protected_assert($res['mail_verified'] != 't', array("error" => "Mail already verified"));
 
     $rec = db::Query("SELECT count(*) FROM users.logins WHERE email = (SELECT email FROM users.request WHERE id = $1)",
       array($id), true);
 
-      if ($rec['count'] == 0)
+    if ($rec['count'] == 0)
     {
       $uid_row = db::Query("SELECT * FROM users.add_user_by_code($1, $2)",
           array($id, $code), 1);
@@ -166,8 +160,7 @@ class reg extends api
     }
     db::Query("DELETE FROM users.request WHERE id = $1 AND code = $2", array($id, $code));
 
-    if ($rec['count'] != 0)
-      return array("error" => "Already registered");
+    phoxy_protected_assert($rec['count'] == 0, array("error" => "Already registered"));
     $login = IncludeModule("api", "login");
     $login->DoLogin($uid);
 
@@ -178,4 +171,26 @@ class reg extends api
       "reset" => "#api/cp"
         );
   }
+
+  private function SendHello( $mail, $url )
+  {
+    $headers   = array();
+    $headers[] = "MIME-Version: 1.0";
+    $headers[] = "Content-type: text/plain; charset=utf-8";
+    $headers[] = "From: regbot@indbtc.com";
+    mail($mail, "Independence limited hello", "
+Здравствуйте,
+
+Благодарим вас за регистрацию учётной записи Independence. Чтобы активировать учётную запись, перейдите по следующей ссылке.
+
+{$url}
+
+Если щелчок на ссылке не работает, скопируйте ссылку в окно вашего браузера или введите непосредственно с клавиатуры.
+
+С уважением,
+
+команда Independece
+-----------------------------
+".(phoxy_conf()['site']), implode("\r\n", $headers));
+  }  
 }

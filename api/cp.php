@@ -67,7 +67,7 @@ class cp extends api
     db::Query("UPDATE matrix.nodes SET commited=true WHERE id=$1", array($nid));
     $transaction->Commit();
     
-    $pid = $matrix->GetGrandParent($tid);
+    $pid = $matrix->GetGrandParent($nid);
     if ($matrix->IsCompleted($pid))
     {
       $user = db::Query("SELECT uid, level FROM matrix.nodes WHERE id=$1",

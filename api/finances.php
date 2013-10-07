@@ -4,7 +4,7 @@ class finances extends api
 {
   public static $tax = 0.0005;
   private static $line_price = 0.001; // deprecated
-  private static $count_bills = 6;
+  private static $count_bills = 7;
 
   private static $levels = array
   (
@@ -42,13 +42,15 @@ class finances extends api
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($qid), true);
     $parents = $this->GetParents();
 
-    $matrix_price = self::$levels[$quest['level']];
-    $total_price = $matrix_price * 2;
-    $line_price = $total_price * 0.1;
+    $total_price = $this->LevelTotalPrice($quest['level']);
+    $matrix_price = $total_price * 0.49;
+    $line_price = $total_price * 0.09;
+    $commi_price = $total_price * 0.06;
 
     $this->Line($qid, $parents, $line_price);
     $matrix = LoadModule('api', 'matrix');
     $this->AddBill($qid, $matrix->NodeOwner($matrix->GetGrandParent($quest['nid'])), $matrix_price);
+    $this->AddBill($qid, null, $commi_price, null);
 
     if ($this->CheckQuest($qid))
     {

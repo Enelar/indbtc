@@ -22,7 +22,7 @@
       HideChild(level, ChildId(0, cid), false);
       if (child.commited == 't')
         ActiveChild(level, ChildId(0, cid));
-      
+      AddTitle(level, 0, cid, child);
       if (child.childs.length > 0)
       {
         var gcid = 0;
@@ -34,6 +34,7 @@
           var grand_child = child.childs[gid];
           gcid++;
           HideChild(level, ChildId(cid, gcid), false);
+          AddTitle(level, cid, gcid, grand_child);
           if (grand_child.commited == 't')
             ActiveChild(level, ChildId(cid, gcid));
         }
@@ -46,5 +47,9 @@
 
 <%
 //}
+setTimeout(function()
+{
+  $( document ).tooltip();
+}, 500); 
 %>
 

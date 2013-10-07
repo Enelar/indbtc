@@ -27,3 +27,12 @@ function ActiveChild( matrix, child_id )
     AccessChild(matrix, child_id).addClass('commited_matrix');
   }, 100);
 }
+
+function AddTitle( level, cid, gcid, obj )
+{
+  setTimeout(function()
+  {
+    var a = AccessChild(level, ChildId(cid, gcid));
+    a.attr('title', "UID: " + obj.uid);
+  }, 200);  
+}

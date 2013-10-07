@@ -36,8 +36,3 @@ function AddTitle( level, cid, gcid, obj )
     a.attr('title', "UID: " + obj.uid);
   }, 200);  
 }
-
-function OnMouseOverMatrixChild( obj )
-{
-  
-}

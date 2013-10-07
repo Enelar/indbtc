@@ -2,36 +2,6 @@
 
 class matrix extends api
 {
-  public function AddChild( $uid, $parent, $level )
-  {
-    debug_print_backtrace();
-    echo "depricated";
-    exit();
-    if ($parent != null && !$this->IsCompleted($parent))
-      return false;
-    db::Query("BEGIN;");
-
-    $row = db::Query("INSERT INTO matrix.nodes(uid, parent, ip, level) VALUES($1, $2, $3, $4) RETURNING id",
-      array($uid, $parent, _ip_, $level), 1);
-
-      if (!count($row))
-      return false;
-    $node = $row['id'];
-
-    if ($node == NULL)
-      return false;
-    $finances = LoadModule("api", "finances");
-    $quest = $finances->MakeQuest($node, $level);
-
-    if ($quest === false)
-    {
-      db::Query("ROLLBACK;");
-      return false;
-    }
-    db::Query("COMMIT;");
-    return $node;
-  }
-
   public function AddToFriend( $uid, $level )
   {
     if (!defined("_ip_"))
@@ -54,34 +24,6 @@ class matrix extends api
     return false;
   }
 
-  private function AddToTop( $uid, $level )
-  {
-    $nid = $this->AddChild($uid, null, $level);
-
-    if ($nid === null)
-      return false;
-    return $nid;
-  }
-
-  public function DeleteMatrix( $nid )
-  {
-    db::Query("DELETE FROM matrix.nodes WHERE id=$1", array($nid));
-  }
-
-  public function GetChilds( $node )
-  {
-    $ret = array();
-    $res = db::Query("SELECT *, min(childs) as child1, max(childs) as child2 FROM matrix.nodes WHERE id = $1 ORDER BY id", array($node));
-    foreach ($res as $row)
-      array_push($ret, $row['id']);
-    foreach ($res as $row)
-    {
-      array_push($ret, $row['child1']);
-      array_push($ret, $row['child2']);
-    }
-    return $ret;
-  }
-
   public function GetGrandParent( $nid )
   {
     $res = db::Query("SELECT matrix.get_parents($1, 2) as tid OFFSET 1", array($nid), true);
@@ -95,7 +37,7 @@ class matrix extends api
     $res = db::Query("SELECT * FROM matrix.is_completed($1, $2)", array($node, $depth), true);
     if (!count($res))
       return false;
-    return $res['is_completed'];
+    return $res['is_completed'] === 't';
   }
 
   protected function Invite( $node, $hash, $force = false )
@@ -103,15 +45,15 @@ class matrix extends api
     global $_SESSION;
 
     $login = LoadModule('api', 'login');
-    if ($login->IsLogined())
-      if (!$force)
-        return array(
+    if (!$force)
+      phoxy_protected_assert(!$login->IsLogined(),
+      array(
           "script" => array("login"),
           "routeline" => "InviteDelogin",
           "data" => array("url" => "api/matrix/invite?node={$node}&hash={$hash}&force=1")
-          );
-      else
-        $login->DoLogout();
+          ));
+    else if ($login->IsLogined())
+      $login->DoLogout();
 
     if ($hash != $this->NodeHash($node))
     {
@@ -132,12 +74,12 @@ class matrix extends api
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT id FROM matrix.nodes WHERE uid=$1 ORDER BY id DESC LIMIT 1", array($login->UID()), true);
-    if (!count($row))
-      throw new phoxy_protected_call_error(array("error" => "Для доступа к статистике зарегистрируйтесь в одном из циклов!"));
+    phoxy_protected_assert(count($row),
+      array("error" => "Для доступа к статистике зарегистрируйтесь в одном из циклов!"));
     return $this->MakeInvite($row['id']);
   }
 
-  public function MakeInvite( $node )
+  private function MakeInvite( $node )
   {
     $url = (phoxy_conf()['site']);
 
@@ -151,7 +93,7 @@ class matrix extends api
     if (!count($res))
     {
       $_SESSION['friend'] = null;
-      return array("reset" => true);
+      throw new phoxy_protected_call_error(array("reset" => true));
     }
     $right_hash = md5(serialize($res));
     return $right_hash;
@@ -255,7 +197,7 @@ class matrix extends api
   {
     $login = LoadModule('api', 'login');
     $row = db::Query("SELECT * FROM finances.quests WHERE uid=$1 AND level=$2 ORDER BY id DESC LIMIT 1",
-    array($login->UID(), $level), true);
+      array($login->UID(), $level), true);
     return $this->ShowMatrixCreate($row['id']);
   }
 
@@ -264,16 +206,16 @@ class matrix extends api
     $quest = $qid;
     $wallet = LoadModule('api', 'wallet');
     $input_wallet = $wallet->GetInputQuestWallet($quest);
-    if ($input_wallet == false)
-      return array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us.");
+    phoxy_protected_assert($input_wallet != false,
+      array("error" => "Matrix created, but bicoin subsystem wont open bill. Please contact us."));
 
     $finances = LoadModule('api', 'finances');
     $quest_info = $finances->GetQuestInfo($quest);
 
     $tax = finances::$tax;
     $amount = $finances->LevelTotalPrice($quest_info['level']) + $tax;
-    if ($amount <= $tax)
-      return array("error" => "Проблема с выпиской счета. Обратитесь к нам.");
+    phoxy_protected_assert($amount > $tax,
+      array("error" => "Проблема с выпиской счета. Обратитесь к нам."));
     return array
     (
       "data" =>
@@ -291,4 +233,22 @@ class matrix extends api
       "result" => "matrix_{$quest_info['level']}"
     );
   }
+  
+  /***
+   * Unused
+   ***/
+  
+  private function GetChilds( $node )
+  {
+    $ret = array();
+    $res = db::Query("SELECT *, min(childs) as child1, max(childs) as child2 FROM matrix.nodes WHERE id = $1 ORDER BY id", array($node));
+    foreach ($res as $row)
+      array_push($ret, $row['id']);
+    foreach ($res as $row)
+    {
+      array_push($ret, $row['child1']);
+      array_push($ret, $row['child2']);
+    }
+    return $ret;
+  }  
 }

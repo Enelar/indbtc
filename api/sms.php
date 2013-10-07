@@ -13,15 +13,25 @@ class sms extends api
   {
     return md5($url . "&password=".urlencode(""));
   }
+  
+  private function BusinessGetBTCPrice()
+  {
+    $raw = http_request('http://data.mtgox.com/api/1/BTCUSD/ticker');
+    $obj = json_decode($raw, true);
+    return $obj['return']['sell']['value'];
+  }
 
   public function TellAboutFinishedQuest( $quest )
   {
     $rows = db::Query("SELECT payed, tid FROM finances.sys_bills WHERE quest=$1", array($quest));
     $quest = db::Query("SELECT * FROM finances.quests WHERE id=$1", array($quest), true);
+    
+    $price = $this->BusinessGetBTCPrice();
     foreach ($rows as $row)
     {
       $amount = round($row['payed'], 3);
-      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc от №{$quest['uid']}.");
+      $usd = round(($price * $amount), 2);    
+      $this->SendUID($row['tid'], "Вам отправлено {$amount} btc(".'$'."{$usd}) от №{$quest['uid']}.");
     }
   }
 

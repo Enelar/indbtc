@@ -54,6 +54,31 @@ $$
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION users.is_child_of( _uid int8, _parent int8 ) RETURNS int2 AS
+$$
+  DECLARE
+    _parents int8[];
+    _i int2;
+  BEGIN
+    SELECT INTO _parents ARRAY(SELECT users.get_line_parents(_uid));
+    FOR _i IN 1..5
+    LOOP
+     IF _parents[_i] = _parent
+     THEN
+       RETURN _i;
+     END IF;
+    END LOOP;
+    
+    IF _uid = _parent
+    THEN
+      RETURN 0;
+    END IF;
+    
+    RETURN NULL;
+  END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION users.get_line_count( _base_uid int8, _level int4 ) RETURNS SETOF int4 AS
 $$
   DECLARE
@@ -230,11 +255,24 @@ $$
 --      _nid = NULL;
 --      RAISE NOTICE 'Friend is null! Inviter not found %', _uid;
 --    END IF;
-    _nid = matrix.search_refer_place(_uid, _level, int2(5));
+    
+    _nid = matrix.debug_refer_place_exception(_uid, _level);
+    IF _nid IS NULL
+    THEN
+      _nid = matrix.search_refer_place(_uid, _level, int2(5));    
+    END IF;
 
     INSERT INTO matrix.nodes(uid, parent, ip, level) VALUES (_uid, _nid, _ip, _level) RETURNING INTO _ret id;
 
     RETURN _ret;
+  END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION matrix.debug_refer_place_exception( _uid int8, _level int2 ) RETURNS int8 AS
+$$
+  BEGIN
+    RETURN NULL;
   END;
 $$
 LANGUAGE plpgsql;
